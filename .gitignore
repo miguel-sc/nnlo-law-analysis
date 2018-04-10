@@ -99,3 +99,10 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# scripts folder
+scripts/
+
+# runcard and steering file
+*.run
+*.str

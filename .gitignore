@@ -106,3 +106,12 @@ scripts/
 # runcard and steering file
 *.run
 *.str
+
+# law database
+.law/
+
+# analysis tar archive
+analysis.tar.gz
+
+#data
+data/

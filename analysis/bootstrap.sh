@@ -13,14 +13,6 @@ action() {
 
     source /cvmfs/grid.cern.ch/emi3ui-latest/etc/profile.d/setup-ui-example.sh
 
-    #git clone https://github.com/benjaminp/six.git
-    #git clone https://github.com/spotify/luigi.git
-    #git clone https://github.com/riga/law.git
-
-    #cd law
-    #git checkout 1265ca709881c521e6ed098b8657d9e1a58ed2ce
-    #cd ..
-
     source /cvmfs/etp.kit.edu/fnlo/fnlosrc_source.sh
 
     export PYTHONPATH="$PWD/law:$PWD/luigi:$PWD/six:$PWD:$PYTHONPATH"
@@ -35,15 +27,6 @@ action() {
     export ANALYSIS_PATH="$PWD"
     export ANALYSIS_DATA_PATH="$ANALYSIS_PATH"
     law db --verbose
-    ls
 
-    #export base="/portal/ekpbms1/home/mcorrea/law_test"
-
-    #export LAW_HOME="$base/.law"
-    #export LAW_CONFIG_FILE="$base/law.cfg"
-    #export LUIGI_CONFIG_PATH="$base/luigi.cfg"
-
-    #export ANALYSIS_PATH="$base"
-    #export ANALYSIS_DATA_PATH="$ANALYSIS_PATH/data"
 }
 action

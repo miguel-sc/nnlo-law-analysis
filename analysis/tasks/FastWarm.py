@@ -5,6 +5,8 @@ import luigi
 import glob
 import os
 import shutil
+
+from Runcard import Runcard
 from Warmup import Warmup
 from Steeringfile import Steeringfile
 
@@ -16,7 +18,7 @@ class FastWarm(Task, HTCondorWorkflow, law.LocalWorkflow):
   channels = luigi.Parameter()
   regions = luigi.Parameter()
   fastwarm_jobs = luigi.Parameter()
-  starting_seed = luigi.Parameter()
+  starting_seeds = luigi.Parameter()
 
   def init_branch(self):
     i = 0
@@ -29,7 +31,11 @@ class FastWarm(Task, HTCondorWorkflow, law.LocalWorkflow):
     self.channel = self.channels.split(' ')[i]
     self.region = self.regions.split(' ')[i]
     self.events = self.fastwarm_events.split(' ')[i]
-    self.seed = str(self.branch + int(self.starting_seed))
+    self.starting_seed = self.starting_seeds.split(' ')[i]
+    self.number = self.branch
+    for j in range(0, i):
+      self.number -= int(self.fastwarm_jobs.split(' ')[j])
+    self.seed = str(self.number + int(self.starting_seed))
     self.index = i
 
   def create_branch_map(self):
@@ -43,23 +49,21 @@ class FastWarm(Task, HTCondorWorkflow, law.LocalWorkflow):
 
   def htcondor_workflow_requires(self):
     return {
-      'warmup': Warmup(name = self.name),
-      'steeringfile': Steeringfile(name = self.name)
+      'warmup': Warmup(),
+      'steeringfile': Steeringfile()
     }
 
   def requires(self):
     self.init_branch()
     return {
-      'warmup': Warmup(name = self.name, branch = self.index),
-      'steeringfile': Steeringfile(name = self.name),
+      'warmup': Warmup(branch = self.index),
+      'steeringfile': Steeringfile(),
       'runcard': Runcard(
-        name = self.name,
         channel = self.channel,
         events = self.events,
         region = self.region,
         seed = self.seed,
         iterations = '1',
-        job = str(self.branch),
         warmup = 'false',
         production = 'true',
         unit_phase = 'UNIT_PHASE'
@@ -72,7 +76,7 @@ class FastWarm(Task, HTCondorWorkflow, law.LocalWorkflow):
       region = ''
     else:
       region = self.region
-    return self.remote_target('{}_FastWarm_{}_{}.tar.gz'.format(self.name, self.channel + region, str(self.branch)))
+    return self.remote_target('{}.{}.s{}.fastwarm.tar.gz'.format(self.name, self.channel + region, self.seed))
 
   def run(self):
     dirpath = 'tmpdir'

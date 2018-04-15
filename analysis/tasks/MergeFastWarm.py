@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import luigi
+import six
 import glob
 import os
 import shutil
@@ -14,15 +15,15 @@ class MergeFastWarm(Task):
   merge_dir = luigi.Parameter()
 
   def requires(self):
-    return FastWarm(name = self.name)
+    return FastWarm()
 
   def output(self):
-    return self.remote_target('{}_MergedFastWarm.tar.gz'.format(self.name))
+    return self.remote_target('{}.fastwarm.tar.gz'.format(self.name))
 
   def run(self):
     os.mkdir(self.merge_dir + '/tmpdir')
     prevdir = os.getcwd()
-    os.chdir(self.merge_dir)
+    os.chdir(self.merge_dir + '/tmpdir')
 
     self.output().parent.touch()
 
@@ -38,6 +39,7 @@ class MergeFastWarm(Task):
     tablenames = []
     for file in glob.glob('*.wrm'):
       fileparts = file.split('.')
+      print fileparts
       obs = fileparts[3]
       scen = fileparts[1]
       if obs not in tablenames:

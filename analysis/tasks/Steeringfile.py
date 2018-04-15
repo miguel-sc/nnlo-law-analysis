@@ -11,7 +11,7 @@ class Steeringfile(Task):
   steering_name = luigi.Parameter()
 
   def requires(self):
-    return BaseSteeringfile(name = self.name, steering_name = self.steering_name)
+    return BaseSteeringfile()
 
   def output(self):
     return self.remote_target(self.steering_name)

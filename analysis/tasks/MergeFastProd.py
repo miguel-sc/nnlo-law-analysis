@@ -67,7 +67,7 @@ class MergeFastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
 
   def output(self):
     self.init_branch()
-    return law.LocalFileTarget('{}/{}/Combined/Final/{}.{}.tab.gz'.format(self.merge_dir, self.name, self.region, self.obs))
+    return law.LocalFileTarget('{}/{}/Combined/Final/{}.{}.{}.tab.gz'.format(self.merge_dir, self.name, self.name, self.region, self.obs))
 
   def run(self):
     self.init_branch()

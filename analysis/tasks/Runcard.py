@@ -8,7 +8,6 @@ from analysis.framework import Task
 
 class Runcard(Task):
 
-  job = luigi.Parameter(default = '-1')
   warmup = luigi.Parameter()
   production = luigi.Parameter()
   events = luigi.Parameter()
@@ -19,7 +18,7 @@ class Runcard(Task):
   unit_phase = luigi.Parameter()
 
   def requires(self):
-    return BaseRuncard(name = self.name)
+    return BaseRuncard()
 
   def output(self):
 
@@ -35,10 +34,7 @@ class Runcard(Task):
     else:
       subdir = 'FastWarm'
 
-    if (int(self.job) < 0):
-      filename = '{}/{}_{}.run'.format(subdir, self.name, region)
-    else:
-      filename = '{}/{}_{}_{}.run'.format(subdir, self.name, region, self.job)
+    filename = '{}/{}.{}.s{}.run'.format(subdir, self.name, region, self.seed)
 
     return self.remote_target(filename)
 

@@ -16,8 +16,8 @@ class Combine(Task):
 
   def requires(self):
     return {
-      'tables': CopyTables(name = self.name),
-      'combine_ini': Combinefile(name = self.name)
+      'tables': CopyTables(),
+      'combine_ini': Combinefile()
     }
 
   def output(self):

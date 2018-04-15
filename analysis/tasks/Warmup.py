@@ -35,7 +35,6 @@ class Warmup(Task, HTCondorWorkflow, law.LocalWorkflow):
   def requires(self):
     self.init_branch()
     return Runcard(
-      name = self.name,
       channel = self.channel,
       region = self.region,
       events = self.events,
@@ -51,7 +50,7 @@ class Warmup(Task, HTCondorWorkflow, law.LocalWorkflow):
       region = ''
     else:
       region = self.region
-    return self.remote_target('{}_Warmup_{}.tar.gz'.format(self.name, self.channel + region))
+    return self.remote_target('{}.{}.s{}.warmup.tar.gz'.format(self.name, self.channel + region, self.seed))
 
   def run(self):
     self.init_branch()

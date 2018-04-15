@@ -20,10 +20,10 @@ class CopyTables(Task, law.LocalWorkflow):
     self.regions_array = self.regions.split(' ')
 
   def create_branch_map(self):
-    return FastProd(name = self.name).branch_map
+    return FastProd().branch_map
 
   def requires(self):
-    return FastProd(name = self.name, branch = self.branch)
+    return FastProd(branch = self.branch)
 
   def output(self):
     if (self.regions_array[self.branch_data] == 'all'):

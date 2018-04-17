@@ -21,7 +21,7 @@ class Combine(Task):
     }
 
   def output(self):
-    return self.remote_target('{}.combine.log'.format(self.name))
+    return self.local_target('{}.combine.log'.format(self.name))
 
   def run(self):
     prevdir = os.getcwd()

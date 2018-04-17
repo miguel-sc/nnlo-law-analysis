@@ -39,7 +39,6 @@ class MergeFastWarm(Task):
     tablenames = []
     for file in glob.glob('*.wrm'):
       fileparts = file.split('.')
-      print fileparts
       obs = fileparts[3]
       scen = fileparts[1]
       if obs not in tablenames:
@@ -48,7 +47,7 @@ class MergeFastWarm(Task):
     for obs in tablenames:
       os.system('perl $ANALYSIS_PATH/scripts/fnlo-add-warmup.pl -v 2.4 -w . -o ' + scen + '.' + obs + '.wrm ' + scen + ' ' + obs)
 
-    os.system('tar -czf tmp.tar.gz ' + scen + '.*')
+    os.system('tar -czf tmp.tar.gz ' + scen + '.*.wrm')
 
     with open('tmp.tar.gz') as infile:
       with self.output().open('w') as outfile:

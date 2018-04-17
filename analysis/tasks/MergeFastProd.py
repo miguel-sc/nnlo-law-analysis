@@ -36,8 +36,7 @@ class MergeFastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
           'obs': obs,
           'region': region
         }
-        if (i < 3):
-          i += 1
+        i += 1
     self.obs = branchmap[self.branch]['obs']
     self.region = branchmap[self.branch]['region']
 
@@ -58,8 +57,7 @@ class MergeFastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
           'obs': obs,
           'region': region
         }
-        if (i < 3):
-          i += 1
+        i += 1
     return branchmap
 
   def requires(self):
@@ -67,7 +65,7 @@ class MergeFastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
 
   def output(self):
     self.init_branch()
-    return law.LocalFileTarget('{}/{}/Combined/Final/{}.{}.{}.tab.gz'.format(self.merge_dir, self.name, self.name, self.region, self.obs))
+    return law.LocalFileTarget('{}/{}/Combined/Final/{}.{}.tab.gz'.format(self.merge_dir, self.name, self.region, self.obs))
 
   def run(self):
     self.init_branch()

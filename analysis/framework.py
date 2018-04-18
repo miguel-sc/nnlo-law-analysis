@@ -42,6 +42,9 @@ class HTCondorWorkflow(law.contrib.htcondor.HTCondorWorkflow):
     wlcg_path = luigi.Parameter()
     bootstrap_file = luigi.Parameter()
 
+    def htcondor_output_postfix(self):
+        return "_{}To{}".format(self.start_branch, self.end_branch)
+
     def htcondor_output_directory(self):
         return law.WLCGDirectoryTarget(
           self.remote_path(),

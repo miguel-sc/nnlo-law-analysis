@@ -10,7 +10,7 @@ action() {
 
     source /portal/ekpbms1/home/mcorrea/src/fnlosrc_source.sh
 
-    export BASE="/portal/ekpbms1/home/mcorrea/nnlo-law-analysis"
+    export BASE="{{analysis_path}}"
 
     export PATH="/cvmfs/cms.cern.ch/slc6_amd64_gcc481/external/python/2.7.6/bin:$BASE/law/bin:$BASE/luigi/bin:$PATH"
     export LD_LIBRARY_PATH="/cvmfs/cms.cern.ch/slc6_amd64_gcc481/external/python/2.7.6/lib:/cvmfs/cms.cern.ch/slc6_amd64_gcc481/external/openssl/0.9.8e__1.0.1/lib:$LD_LIBRARY_PATH"

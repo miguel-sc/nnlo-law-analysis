@@ -62,7 +62,7 @@ class HTCondorWorkflow(law.contrib.htcondor.HTCondorWorkflow):
         config.custom_content = []
         config.custom_content.append(("accounting_group", self.htcondor_accounting_group))
         # config.custom_content.append(("getenv", "true"))
-        # config.render_variables["analysis_path"] = os.getenv("ANALYSIS_PATH")
+        config.render_variables["analysis_path"] = os.getenv("ANALYSIS_PATH")
         config.custom_content.append(("Requirements", self.htcondor_requirements))
         config.custom_content.append(("+RemoteJob", self.htcondor_remote_job))
         config.custom_content.append(("universe", self.htcondor_universe))

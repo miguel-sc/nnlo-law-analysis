@@ -5,7 +5,6 @@ import os
 import fnmatch
 
 from CopyTables import CopyTables
-from Combinefile import Combinefile
 
 from analysis.framework import Task
 
@@ -17,7 +16,6 @@ class Combine(Task):
   def requires(self):
     return {
       'tables': CopyTables(),
-      'combine_ini': Combinefile()
     }
 
   def output(self):
@@ -28,13 +26,16 @@ class Combine(Task):
 
     self.output().parent.touch()
 
-    combine_ini = self.input()['combine_ini']
-    with combine_ini.open('r') as infile:
-      os.chdir(self.merge_dir + '/' + self.name)
-      with open('combine.ini', 'w') as outfile:
-        outfile.write(infile.read())
+    #combine_ini = self.input()['combine_ini']
+    #with combine_ini.open('r') as infile:
+    #  os.chdir(self.merge_dir + '/' + self.name)
+    #  with open('combine.ini', 'w') as outfile:
+    #    outfile.write(infile.read())
 
-    os.system('nnlojet-combine.py -C combine.ini -j {} | tee tmp.log'.format(self.cores))
+    os.chdir('{}/{}'.format(self.merge_dir, self.name))
+    analysis_path = os.environ['ANALYSIS_PATH']
+
+    os.system('nnlojet-combine.py -C {}/combine.ini -j {} | tee tmp.log'.format(analysis_path, self.cores))
 
     for root, dirnames, filenames in os.walk('.'):
       for filename in fnmatch.filter(filenames, '*.APPLfast.txt'):
@@ -44,14 +45,9 @@ class Combine(Task):
           parts.pop()
           parts.pop()
           parts.append('dat')
+          parts.insert(0, self.process)
           endfile = '.'.join(parts)
-          print filename
-          print endfile
-          parts.pop()
-          parts.append('def.dat')
-          defdat = '.'.join(parts)
-          os.system('mv {} {}'.format(endfile, defdat))
-          os.system('nnlojet-combine.py -C combine.ini --APPLfast {} > {}'.format(filename, endfile))
+          os.system('nnlojet-combine.py -C {}/combine.ini --APPLfast {} > {}'.format(analysis_path, filename, endfile))
 
     with open('tmp.log', 'r') as infile:
       with self.output().open('w') as outfile:

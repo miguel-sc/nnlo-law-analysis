@@ -2,15 +2,15 @@
 
 import law
 import luigi
+import os
 
 from analysis.framework import Task
 
 class BaseSteeringfile(Task):
 
-  steering_name = luigi.Parameter()
-
   def output(self):
-    return law.LocalFileTarget(self.steering_name)
+    analysis_path = os.environ['ANALYSIS_PATH']
+    return law.LocalFileTarget('{}/{}.{}.str'.format(analysis_path, self.process, self.name))
 
   def run(self):
     return

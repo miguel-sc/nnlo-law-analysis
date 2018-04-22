@@ -11,21 +11,16 @@ class Runcard(Task):
   warmup = luigi.Parameter()
   production = luigi.Parameter()
   events = luigi.Parameter()
+  process = luigi.Parameter()
   seed = luigi.Parameter()
   iterations = luigi.Parameter()
   channel = luigi.Parameter()
-  region = luigi.Parameter()
   unit_phase = luigi.Parameter()
 
   def requires(self):
     return BaseRuncard()
 
   def output(self):
-
-    if (self.region == 'all'):
-      region = self.channel
-    else:
-      region = self.channel + self.region
 
     if (self.warmup == 'true'):
       subdir = 'Warmup'
@@ -34,20 +29,31 @@ class Runcard(Task):
     else:
       subdir = 'FastWarm'
 
-    filename = '{}/{}.{}.s{}.run'.format(subdir, self.name, region, self.seed)
+    filename = '{}/{}.{}.s{}.run'.format(subdir, self.process, self.channel, self.name, self.seed)
 
     return self.remote_target(filename)
 
   def run(self):
     self.output().parent.touch()
+
+    if (self.channel == 'RRa'):
+      channel = 'RR'
+      region = 'a'
+    elif (self.channel == 'RRb'):
+      channel = 'RR'
+      region = 'b'
+    else:
+      channel = self.channel
+      region = 'all'
+
     substitutions = {
       '@SEED@': self.seed,
       '@WARMUP@': self.warmup,
       '@PRODUCTION@': self.production,
       '@EVENTS@': self.events,
       '@ITERATIONS@': self.iterations,
-      '@CHANNEL@': self.channel,
-      '@REGION@': self.region,
+      '@CHANNEL@': channel,
+      '@REGION@': region,
       '@UNIT_PHASE@': self.unit_phase
     }
     with self.input().open('r') as infile:

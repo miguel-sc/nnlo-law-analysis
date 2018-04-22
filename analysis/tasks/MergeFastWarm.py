@@ -18,7 +18,7 @@ class MergeFastWarm(Task):
     return FastWarm()
 
   def output(self):
-    return self.remote_target('{}.fastwarm.tar.gz'.format(self.name))
+    return self.remote_target('{}.{}.fastwarm.tar.gz'.format(self.process, self.name))
 
   def run(self):
     os.mkdir(self.merge_dir + '/tmpdir')

@@ -35,7 +35,7 @@ class FnloCppread(Task, law.LocalWorkflow):
     table = self.input().path
     parts = os.path.basename(table).split('.')
 
-    for table in glob.glob(self.merge_dir + '/' + self.name + '/' + parts[0] + '/*' + parts[1] + '*.tab.gz'):
+    for table in glob.glob(self.merge_dir + '/' + self.name + '/' + parts[1] + '/*' + parts[2] + '*.tab.gz'):
       parts = table.split('.')
       parts.pop()
       parts.pop()

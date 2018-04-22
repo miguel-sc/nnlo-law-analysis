@@ -8,13 +8,11 @@ from analysis.framework import Task
 
 class Steeringfile(Task):
 
-  steering_name = luigi.Parameter()
-
   def requires(self):
     return BaseSteeringfile()
 
   def output(self):
-    return self.remote_target(self.steering_name)
+    return self.remote_target('{}.{}.str'.format(self.process, self.name))
 
   def run(self):
     with self.input().open('r') as infile:

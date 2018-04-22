@@ -12,12 +12,10 @@ class CopyTables(Task, law.LocalWorkflow):
 
   merge_dir = luigi.Parameter()
   channels = luigi.Parameter()
-  regions = luigi.Parameter()
 
   def __init__(self, *args, **kwargs):
     super(CopyTables, self).__init__(*args, **kwargs)
     self.channels_array = self.channels.split(' ')
-    self.regions_array = self.regions.split(' ')
 
   def create_branch_map(self):
     return FastProd().branch_map
@@ -26,18 +24,21 @@ class CopyTables(Task, law.LocalWorkflow):
     return FastProd(branch = self.branch)
 
   def output(self):
-    if (self.regions_array[self.branch_data] == 'all'):
-      region = self.channels_array[self.branch_data]
-    else:
-      region = self.channels_array[self.branch_data] + self.regions_array[self.branch_data]
     basename = os.path.basename(self.input().path)
-    return law.LocalFileTarget('{}/{}/{}/{}'.format(self.merge_dir, self.name, region, basename))
+    parts = basename.split('.')
+    parts.pop()
+    parts.pop()
+    parts.append('log')
+    outfile = '.'.join(parts)
+    return law.LocalFileTarget('{}/{}/{}/{}'.format(self.merge_dir, self.name, self.channels_array[self.branch_data], outfile))
 
   def run(self):
     self.output().parent.touch()
     with self.input().open('r') as infile:
       with self.output().open('w') as outfile:
         outfile.write(infile.read())
+    basename = os.path.basename(self.input().path)
     directory = os.path.dirname(self.output().path)
-    os.system('tar -xzvf ' + self.output().path + ' -C ' + directory)
+    os.system('tar -xzvf ' + basename + ' -C ' + directory)
+    os.system('rm ' + basename)
 

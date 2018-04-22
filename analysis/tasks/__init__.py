@@ -4,7 +4,6 @@ import BaseRuncard
 import BaseSteeringfile
 import Runcard
 import Steeringfile
-import Combinefile
 import Warmup
 import FastWarm
 import MergeFastWarm

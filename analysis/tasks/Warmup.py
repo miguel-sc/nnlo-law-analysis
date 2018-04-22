@@ -14,14 +14,12 @@ class Warmup(Task, HTCondorWorkflow, law.LocalWorkflow):
 
   warmup_events = luigi.Parameter()
   channels = luigi.Parameter()
-  regions = luigi.Parameter()
   warmup_iterations = luigi.Parameter()
   starting_seed = luigi.Parameter()
 
   def init_branch(self):
     i = self.branch
     self.channel = self.channels.split(' ')[i]
-    self.region = self.regions.split(' ')[i]
     self.events = self.warmup_events.split(' ')[i]
     self.iterations = self.warmup_iterations.split(' ')[i]
     self.seed = str(self.branch + int(self.starting_seed))
@@ -36,7 +34,6 @@ class Warmup(Task, HTCondorWorkflow, law.LocalWorkflow):
     self.init_branch()
     return Runcard(
       channel = self.channel,
-      region = self.region,
       events = self.events,
       seed = self.seed,
       iterations = self.iterations,
@@ -46,11 +43,7 @@ class Warmup(Task, HTCondorWorkflow, law.LocalWorkflow):
 
   def output(self):
     self.init_branch()
-    if (self.region == 'all'):
-      region = ''
-    else:
-      region = self.region
-    return self.remote_target('{}.{}.s{}.warmup.tar.gz'.format(self.name, self.channel + region, self.seed))
+    return self.remote_target('{}.{}.{}.warmup.tar.gz'.format(self.process, self.channel, self.name))
 
   def run(self):
     self.init_branch()
@@ -67,7 +60,14 @@ class Warmup(Task, HTCondorWorkflow, law.LocalWorkflow):
 
     os.environ['OMP_NUM_THREADS'] = self.htcondor_request_cpus
 
-    os.system('NNLOJET -run ' + name)
+    outfile = os.path.basename(self.output().path)
+    parts = outfile.split('.')
+    parts.pop()
+    parts.pop()
+    parts.append('log')
+    logfile = '.'.join(parts)
+
+    os.system('NNLOJET -run ' + name + ' | tee ' + logfile)
     os.system('tar -czf tmp.tar.gz *' + self.channel + '*')
     with open('tmp.tar.gz') as infile:
       with self.output().open('w') as outfile:

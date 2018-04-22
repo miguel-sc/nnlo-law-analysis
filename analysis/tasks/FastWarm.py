@@ -15,8 +15,8 @@ from analysis.framework import Task, HTCondorWorkflow
 class FastWarm(Task, HTCondorWorkflow, law.LocalWorkflow):
 
   fastwarm_events = luigi.Parameter()
+  process = luigi.Parameter()
   channels = luigi.Parameter()
-  regions = luigi.Parameter()
   fastwarm_jobs = luigi.Parameter()
   starting_seeds = luigi.Parameter()
 
@@ -29,7 +29,6 @@ class FastWarm(Task, HTCondorWorkflow, law.LocalWorkflow):
         i += 1
     i = branchmap[self.branch]
     self.channel = self.channels.split(' ')[i]
-    self.region = self.regions.split(' ')[i]
     self.events = self.fastwarm_events.split(' ')[i]
     self.starting_seed = self.starting_seeds.split(' ')[i]
     self.number = self.branch
@@ -61,7 +60,6 @@ class FastWarm(Task, HTCondorWorkflow, law.LocalWorkflow):
       'runcard': Runcard(
         channel = self.channel,
         events = self.events,
-        region = self.region,
         seed = self.seed,
         iterations = '1',
         warmup = 'false',
@@ -72,11 +70,7 @@ class FastWarm(Task, HTCondorWorkflow, law.LocalWorkflow):
 
   def output(self):
     self.init_branch()
-    if (self.region == 'all'):
-      region = ''
-    else:
-      region = self.region
-    return self.remote_target('{}.{}.s{}.fastwarm.tar.gz'.format(self.name, self.channel + region, self.seed))
+    return self.remote_target('{}.{}.{}.fastwarm.s{}.tar.gz'.format(self.process, self.channel, self.name, self.seed))
 
   def run(self):
     dirpath = 'tmpdir'
@@ -103,12 +97,20 @@ class FastWarm(Task, HTCondorWorkflow, law.LocalWorkflow):
         outfile.write(infile.read())
 
     os.system('tar -xzvf warmup.tar.gz')
-    os.system('NNLOJET -run tmp.run')
+
+    outfile = os.path.basename(self.output().path)
+    parts = outfile.split('.')
+    parts.pop()
+    parts.pop()
+    parts.append('log')
+    logfile = '.'.join(parts)
+
+    os.system('NNLOJET -run tmp.run | tee {}'.format(logfile))
 
     for file in glob.glob('*'):
       os.rename(file, str(self.branch) + '.' + file)
 
-    os.system('tar -czf tmp.tar.gz *.wrm *.log')
+    os.system('tar -czf tmp.tar.gz *.wrm {}'.format(logfile))
 
     with open('tmp.tar.gz') as infile:
       with self.output().open('w') as outfile:

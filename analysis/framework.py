@@ -11,6 +11,7 @@ law.contrib.load("wlcg")
 class Task(law.Task):
 
     name = luigi.Parameter()
+    process = luigi.Parameter()
     wlcg_path = luigi.Parameter()
 
     def local_path(self, *path):
@@ -25,6 +26,7 @@ class Task(law.Task):
         return os.path.join(*parts)
 
     def remote_target(self, *path):
+        print path
         return law.WLCGFileTarget(self.remote_path(*path),law.WLCGFileSystem(None, self.wlcg_path))
 
 

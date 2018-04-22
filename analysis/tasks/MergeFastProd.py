@@ -20,7 +20,7 @@ class MergeFastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
    }
 
   def init_branch(self):
-    regions = ['LO', 'R', 'V', 'RRa', 'RRb', 'RV', 'VV']
+    channels = ['LO', 'R', 'V', 'RRa', 'RRb', 'RV', 'VV']
     tablenames = []
     for file in glob.glob('{}/{}/*/*.tab.gz'.format(self.merge_dir, self.name)):
       fileparts = file.split('.')
@@ -30,18 +30,18 @@ class MergeFastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
         tablenames.append(obs)
     i = 0
     branchmap = {}
-    for region in regions:
+    for channel in channels:
       for obs in sorted(tablenames):
         branchmap[i] = {
           'obs': obs,
-          'region': region
+          'channel': channel
         }
         i += 1
     self.obs = branchmap[self.branch]['obs']
-    self.region = branchmap[self.branch]['region']
+    self.channel = branchmap[self.branch]['channel']
 
   def create_branch_map(self):
-    regions = ['LO', 'R', 'V', 'RRa', 'RRb', 'RV', 'VV']
+    channels = ['LO', 'R', 'V', 'RRa', 'RRb', 'RV', 'VV']
     tablenames = []
     for file in glob.glob('{}/{}/*/*.tab.gz'.format(self.merge_dir, self.name)):
       fileparts = file.split('.')
@@ -51,13 +51,14 @@ class MergeFastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
         tablenames.append(obs)
     i = 0
     branchmap = {}
-    for region in regions:
+    for channel in channels:
       for obs in sorted(tablenames):
         branchmap[i] = {
           'obs': obs,
-          'region': region
+          'channel': channel
         }
-        i += 1
+        if (i<3):
+          i += 1
     return branchmap
 
   def requires(self):
@@ -65,13 +66,20 @@ class MergeFastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
 
   def output(self):
     self.init_branch()
-    return law.LocalFileTarget('{}/{}/Combined/Final/{}.{}.tab.gz'.format(self.merge_dir, self.name, self.region, self.obs))
+    return law.LocalFileTarget('{}/{}/Combined/Final/{}.{}.{}.tab.gz'.format(self.merge_dir, self.name, self.process, self.channel, self.obs))
 
   def run(self):
     self.init_branch()
     self.output().parent.touch()
 
-    os.system('fnlo-tk-merge2 -w NNLOJET {merge_dir}/{name}/Combined/Final/NNLO.{obs}.APPLfast.txt {merge_dir}/{name}/{region}/*.{obs}.s*.tab.gz tmp.tab.gz'.format(obs = self.obs, region = self.region, merge_dir = self.merge_dir, name = self.name))
+    outfile = self.output().path
+    parts = outfile.split('.')
+    parts.pop()
+    parts.pop()
+    parts.append('merge2.log')
+    logfile = '.'.join(parts)
+
+    os.system('fnlo-tk-merge2 -w NNLOJET {merge_dir}/{name}/Combined/Final/NNLO.{obs}.APPLfast.txt {merge_dir}/{name}/{channel}/*.{obs}.s*.tab.gz tmp.tab.gz | tee {log}'.format(obs = self.obs, channel = self.channel, merge_dir = self.merge_dir, name = self.name, log = logfile))
 
     with open('tmp.tab.gz', 'r') as infile:
       with self.output().open('w') as outfile:

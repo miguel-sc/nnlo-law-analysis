@@ -16,7 +16,7 @@ class FastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
 
   fastprod_events = luigi.Parameter()
   channels = luigi.Parameter()
-  regions = luigi.Parameter()
+  process = luigi.Parameter()
   fastprod_jobs = luigi.Parameter()
   starting_seeds = luigi.Parameter()
 
@@ -29,7 +29,6 @@ class FastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
         i += 1
     i = branchmap[self.branch]
     self.channel = self.channels.split(' ')[i]
-    self.region = self.regions.split(' ')[i]
     self.events = self.fastprod_events.split(' ')[i]
     self.starting_seed = self.starting_seeds.split(' ')[i]
     self.number = self.branch
@@ -63,7 +62,6 @@ class FastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
       'runcard': Runcard(
         channel = self.channel,
         events = self.events,
-        region = self.region,
         seed = self.seed,
         iterations = '1',
         warmup = 'false',
@@ -74,13 +72,10 @@ class FastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
 
   def output(self):
     self.init_branch()
-    if (self.region == 'all'):
-      region = self.channel
-    else:
-      region = self.channel + self.region
-    return self.remote_target('{}.{}.s{}.fastprod.tar.gz'.format(self.name, region, self.seed))
+    return self.remote_target('{}.{}.{}.fastprod.s{}.tar.gz'.format(self.process, self.channel, self.name, self.seed))
 
   def run(self):
+    self.init_branch()
     dirpath = 'tmpdir'
     os.mkdir(dirpath)
     prevdir = os.getcwd()
@@ -111,9 +106,24 @@ class FastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
 
     os.system('tar -xzvf warmup.tar.gz')
     os.system('tar -xzvf fastwarm.tar.gz')
-    os.system('NNLOJET -run tmp.run')
+    
+    outfile = os.path.basename(self.output().path)
+    parts = outfile.split('.')
+    parts.pop()
+    parts.pop()
+    parts.append('log')
+    logfile = '.'.join(parts)
 
-    os.system('tar -czf tmp.tar.gz *.tab.gz *.dat *.log')
+    os.system('NNLOJET -run tmp.run | tee {}'.format(logfile))
+
+    # for tab in glob.glob('*.tab.gz'):
+    #   parts = tab.split('.')
+    #   parts[1] = self.channel
+    #   del parts[2]
+    #   newtab = '.'.join(parts)      
+    #   os.rename(tab, newtab)
+
+    os.system('tar -czf tmp.tar.gz *.tab.gz *.dat {}'.format(logfile))
 
     with open('tmp.tar.gz') as infile:
       with self.output().open('w') as outfile:

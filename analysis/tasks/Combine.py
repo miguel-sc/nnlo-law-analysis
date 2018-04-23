@@ -39,7 +39,6 @@ class Combine(Task):
 
     for root, dirnames, filenames in os.walk('.'):
       for filename in fnmatch.filter(filenames, '*.APPLfast.txt'):
-        filename = os.path.join(root, filename)
         parts = filename.split('.')
         if 'cross' not in parts:
           parts.pop()
@@ -47,7 +46,8 @@ class Combine(Task):
           parts.append('dat')
           parts.insert(0, self.process)
           endfile = '.'.join(parts)
-          os.system('nnlojet-combine.py -C {}/combine.ini --APPLfast {} > {}'.format(analysis_path, filename, endfile))
+          print endfile
+          os.system('nnlojet-combine.py -C {}/combine.ini --APPLfast Combined/Final/{} > Combined/Final/{}'.format(analysis_path, filename, endfile))
 
     with open('tmp.log', 'r') as infile:
       with self.output().open('w') as outfile:

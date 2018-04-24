@@ -34,11 +34,13 @@ class CopyTables(Task, law.LocalWorkflow):
 
   def run(self):
     self.output().parent.touch()
+    basename = os.path.basename(self.input().path)
+    tarfile = '{}/{}/{}/{}'.format(self.merge_dir, self.name, self.channels_array[self.branch_data], basename)
     with self.input().open('r') as infile:
-      with self.output().open('w') as outfile:
+      with open(tarfile, 'w') as outfile:
         outfile.write(infile.read())
     basename = os.path.basename(self.input().path)
     directory = os.path.dirname(self.output().path)
-    os.system('tar -xzvf ' + basename + ' -C ' + directory)
-    os.system('rm ' + basename)
+    os.system('tar -xzvf ' + tarfile + ' -C ' + directory)
+    os.system('rm ' + tarfile)
 

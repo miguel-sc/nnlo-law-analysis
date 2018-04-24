@@ -57,8 +57,7 @@ class MergeFastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
           'obs': obs,
           'channel': channel
         }
-        if (i<3):
-          i += 1
+        i += 1
     return branchmap
 
   def requires(self):

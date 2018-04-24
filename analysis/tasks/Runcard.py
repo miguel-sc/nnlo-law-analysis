@@ -29,7 +29,7 @@ class Runcard(Task):
     else:
       subdir = 'FastWarm'
 
-    filename = '{}/{}.{}.s{}.run'.format(subdir, self.process, self.channel, self.name, self.seed)
+    filename = '{}/{}.{}.{}.s{}.run'.format(subdir, self.process, self.channel, self.name, self.seed)
 
     return self.remote_target(filename)
 

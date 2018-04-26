@@ -44,10 +44,12 @@ class MergeFastWarm(Task):
       if obs not in tablenames:
         tablenames.append(obs)
 
+    os.system('rm *.log')
+   
     for obs in tablenames:
-      os.system('perl $ANALYSIS_PATH/scripts/fnlo-add-warmup.pl -v 2.4 -w . -o ' + scen + '.' + obs + '.wrm ' + scen + ' ' + obs)
+      os.system('perl $ANALYSIS_PATH/scripts/fnlo-add-warmup.pl -v 2.4 -w . -o {scen}.{obs}.wrm {scen} {obs} | tee {scen}.{obs}.addwarmup.log'.format(scen = scen, obs = obs))
 
-    os.system('tar -czf tmp.tar.gz ' + scen + '.*.wrm')
+    os.system('tar -czf tmp.tar.gz ' + scen + '.*.wrm *.log')
 
     with open('tmp.tar.gz') as infile:
       with self.output().open('w') as outfile:

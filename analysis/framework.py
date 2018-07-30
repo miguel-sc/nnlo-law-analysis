@@ -66,9 +66,9 @@ class HTCondorWorkflow(law.contrib.htcondor.HTCondorWorkflow):
         # config.custom_content.append(("getenv", "true"))
         config.render_variables["analysis_path"] = os.getenv("ANALYSIS_PATH")
         config.custom_content.append(("Requirements", self.htcondor_requirements))
-        config.custom_content.append(("+RemoteJob", self.htcondor_remote_job))
-        config.custom_content.append(("universe", self.htcondor_universe))
-        config.custom_content.append(("docker_image", self.htcondor_docker_image))
+        #config.custom_content.append(("+RemoteJob", self.htcondor_remote_job))
+        #config.custom_content.append(("universe", self.htcondor_universe))
+        #config.custom_content.append(("docker_image", self.htcondor_docker_image))
         config.custom_content.append(("+RequestWalltime", self.htcondor_walltime))
         config.custom_content.append(("x509userproxy", self.htcondor_user_proxy))
         config.custom_content.append(("request_cpus", self.htcondor_request_cpus))
@@ -76,7 +76,8 @@ class HTCondorWorkflow(law.contrib.htcondor.HTCondorWorkflow):
         
         prevdir = os.getcwd()
         os.system('cd $ANALYSIS_PATH')
-        os.system('tar -czf analysis.tar.gz analysis luigi.cfg law.cfg luigi law six')
+        if not os.path.isfile('analysis.tar.gz'):
+            os.system('tar -czvf analysis.tar.gz analysis luigi.cfg law.cfg luigi law six')
 	os.chdir(prevdir)
 
         config.input_files.append(law.util.rel_path(__file__, '../analysis.tar.gz'))

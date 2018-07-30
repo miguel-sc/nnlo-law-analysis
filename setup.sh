@@ -19,11 +19,13 @@ action() {
     export ANALYSIS_PATH="$base"
     export ANALYSIS_DATA_PATH="$ANALYSIS_PATH/data"
 
+    export PATH="$base/scripts:$PATH"
+
     source /cvmfs/grid.cern.ch/emi3ui-latest/etc/profile.d/setup-ui-example.sh
 
-    source /cvmfs/etp.kit.edu/fnlo/fnlosrc_source.sh
+    source /storage/9/mcorrea/local/src/fnlosrc_source.sh
 
-    export PATH="/cvmfs/etp.kit.edu/fnlo/src/NNLOJET_rev4585/driver/bin:$PATH"
+    #export PATH="/cvmfs/etp.kit.edu/fnlo/src/NNLOJET_rev4585/driver/bin:$PATH"
 
     source "$( law completion )"
 }

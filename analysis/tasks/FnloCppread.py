@@ -13,7 +13,10 @@ class FnloCppread(Task, law.LocalWorkflow):
 
   merge_dir = luigi.Parameter()
   pdf = luigi.Parameter()
+  scalecombs = luigi.Parameter()
   ascode = luigi.Parameter()
+  norm = luigi.Parameter()
+  scale = luigi.Parameter()
 
   def create_branch_map(self):
     return MergeFastProd().branch_map
@@ -26,7 +29,7 @@ class FnloCppread(Task, law.LocalWorkflow):
     parts = table.split('.')
     parts.pop()
     parts.pop()
-    output = '.'.join(parts) + '_6.log'
+    output = '.'.join(parts) + '.log'
     return law.LocalFileTarget(output)
 
   def run(self):
@@ -41,8 +44,7 @@ class FnloCppread(Task, law.LocalWorkflow):
       parts.pop()
       logfile = '.'.join(parts)
 
-      os.system('fnlo-tk-cppread {} {} 1 {} | tee {}_0.log'.format(table, self.pdf, self.ascode, logfile))
-      os.system('fnlo-tk-cppread {} {} -6 {} | tee {}_6.log'.format(table, self.pdf, self.ascode, logfile))
+      os.system('fnlo-tk-cppread {} {} {} {} {} {} | tee {}.log'.format(table, self.pdf, self.scalecombs, self.ascode, self.norm, self.scale, logfile))
 
     table = self.input().path
     parts = table.split('.')
@@ -50,6 +52,5 @@ class FnloCppread(Task, law.LocalWorkflow):
     parts.pop()
     logfile = '.'.join(parts)
 
-    os.system('fnlo-tk-cppread {} {} 1 {} | tee {}_0.log'.format(table, self.pdf, self.ascode, logfile))
-    os.system('fnlo-tk-cppread {} {} -6 {} | tee {}_6.log'.format(table, self.pdf, self.ascode, logfile))
+    os.system('fnlo-tk-cppread {} {} {} {} {} {} | tee {}.log'.format(table, self.pdf, self.scalecombs, self.ascode, self.norm, self.scale, logfile))
 

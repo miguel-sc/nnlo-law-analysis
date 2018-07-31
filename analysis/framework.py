@@ -2,6 +2,7 @@
 
 import os
 
+import re
 import luigi
 import law
 import law.contrib.htcondor
@@ -29,6 +30,25 @@ class Task(law.Task):
         print path
         return law.WLCGFileTarget(self.remote_path(*path),law.WLCGFileSystem(None, self.wlcg_path))
 
+class HTCondorJobManager(law.contrib.htcondor.HTCondorJobManager):
+
+    status_line_cre = re.compile("^(\d+\.\d+)" + 4 * "\s+[^\s]+" + "\s+([UIRXSCHE])\s+.*$")
+
+    def get_htcondor_version(cls):
+        return (8, 6, 5)
+    
+    @classmethod
+    def map_status(cls, status_flag):
+        if status_flag in ("U", "I", "S"):
+            return cls.PENDING
+        elif status_flag in ("R"):
+            return cls.RUNNING
+        elif status_flag in ("C",):
+            return cls.FINISHED
+        elif status_flag in ("H", "E"):
+            return cls.FAILED
+        else:
+            return cls.FAILED
 
 class HTCondorWorkflow(law.contrib.htcondor.HTCondorWorkflow):
 
@@ -43,6 +63,9 @@ class HTCondorWorkflow(law.contrib.htcondor.HTCondorWorkflow):
     htcondor_docker_image = luigi.Parameter()
     wlcg_path = luigi.Parameter()
     bootstrap_file = luigi.Parameter()
+
+    def htcondor_create_job_manager(self):
+        return HTCondorJobManager()
 
     def htcondor_output_postfix(self):
         return "_{}To{}".format(self.start_branch, self.end_branch)
@@ -66,9 +89,9 @@ class HTCondorWorkflow(law.contrib.htcondor.HTCondorWorkflow):
         # config.custom_content.append(("getenv", "true"))
         config.render_variables["analysis_path"] = os.getenv("ANALYSIS_PATH")
         config.custom_content.append(("Requirements", self.htcondor_requirements))
-        #config.custom_content.append(("+RemoteJob", self.htcondor_remote_job))
-        #config.custom_content.append(("universe", self.htcondor_universe))
-        #config.custom_content.append(("docker_image", self.htcondor_docker_image))
+        config.custom_content.append(("+RemoteJob", self.htcondor_remote_job))
+        config.custom_content.append(("universe", self.htcondor_universe))
+        config.custom_content.append(("docker_image", self.htcondor_docker_image))
         config.custom_content.append(("+RequestWalltime", self.htcondor_walltime))
         config.custom_content.append(("x509userproxy", self.htcondor_user_proxy))
         config.custom_content.append(("request_cpus", self.htcondor_request_cpus))

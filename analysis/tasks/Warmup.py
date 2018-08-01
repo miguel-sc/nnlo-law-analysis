@@ -17,36 +17,31 @@ class Warmup(Task, HTCondorWorkflow, law.LocalWorkflow):
   warmup_iterations = luigi.Parameter()
   starting_seed = luigi.Parameter()
 
-  def init_branch(self):
-    i = self.branch
-    self.channel = self.channels.split(' ')[i]
-    self.events = self.warmup_events.split(' ')[i]
-    self.iterations = self.warmup_iterations.split(' ')[i]
-    self.seed = str(self.branch + int(self.starting_seed))
-
   def create_branch_map(self):
     branchmap = {}
     for i, channel in enumerate(self.channels.split(' ')):
-      branchmap[i] = i
+      branchmap[i] = {
+        'channel': channel,
+        'events': self.warmup_events.split(' ')[i],
+        'iterations': self.warmup_iterations.split(' ')[i],
+        'seed': str(i + int(self.starting_seed))
+      }
     return branchmap
 
   def requires(self):
-    self.init_branch()
     return Runcard(
-      channel = self.channel,
-      events = self.events,
-      seed = self.seed,
-      iterations = self.iterations,
+      channel = self.branch_data['channel'],
+      events = self.branch_data['events'],
+      seed = self.branch_data['seed'],
+      iterations = self.branch_data['iterations'],
       warmup = 'true',
       production = 'false',
       unit_phase = '')
 
   def output(self):
-    self.init_branch()
-    return self.remote_target('{}.{}.{}.warmup.tar.gz'.format(self.process, self.channel, self.name))
+    return self.remote_target('{}.{}.{}.warmup.tar.gz'.format(self.process, self.branch_data['channel'], self.name))
 
   def run(self):
-    self.init_branch()
     dirpath = 'tmpdir'
     os.mkdir(dirpath)
     prevdir = os.getcwd()
@@ -68,7 +63,7 @@ class Warmup(Task, HTCondorWorkflow, law.LocalWorkflow):
     logfile = '.'.join(parts)
 
     os.system('NNLOJET -run ' + name + ' | tee ' + logfile)
-    os.system('tar -czf tmp.tar.gz *' + self.channel + '*')
+    os.system('tar -czf tmp.tar.gz *{}*'.format(self.branch_data['channel']))
     with open('tmp.tar.gz') as infile:
       with self.output().open('w') as outfile:
         data = infile.read()

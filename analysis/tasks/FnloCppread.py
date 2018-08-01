@@ -5,7 +5,7 @@ import luigi
 import os
 import glob
 
-from MergeFastProd import MergeFastProd
+from CopyTables import CopyTables
 
 from analysis.framework import Task
 
@@ -19,26 +19,19 @@ class FnloCppread(Task, law.LocalWorkflow):
   scale = luigi.Parameter()
 
   def create_branch_map(self):
-    return MergeFastProd().branch_map
+    return CopyTables().branch_map
 
   def requires(self):
-    return MergeFastProd(branch = self.branch)
+    return CopyTables(branch = self.branch)
 
   def output(self):
-    table = self.input().path
-    parts = table.split('.')
-    parts.pop()
-    parts.pop()
-    output = '.'.join(parts) + '.log'
-    return law.LocalFileTarget(output)
+    return self.local_target('{}.{}.s{}.cppread'.format(self.process, self.branch_data['channel'], self.branch_data['seed']))
 
   def run(self):
-    self.output().parent.touch()
-    
     table = self.input().path
     parts = os.path.basename(table).split('.')
 
-    for table in glob.glob(self.merge_dir + '/' + self.name + '/' + parts[1] + '/*' + parts[2] + '*.tab.gz'):
+    for table in glob.glob(self.merge_dir + '/' + self.name + '/' + self.branch_data['channel'] + '/*' + self.branch_data['seed'] + '*.tab.gz'):
       parts = table.split('.')
       parts.pop()
       parts.pop()
@@ -46,11 +39,5 @@ class FnloCppread(Task, law.LocalWorkflow):
 
       os.system('fnlo-tk-cppread {} {} {} {} {} {} | tee {}.log'.format(table, self.pdf, self.scalecombs, self.ascode, self.norm, self.scale, logfile))
 
-    table = self.input().path
-    parts = table.split('.')
-    parts.pop()
-    parts.pop()
-    logfile = '.'.join(parts)
-
-    os.system('fnlo-tk-cppread {} {} {} {} {} {} | tee {}.log'.format(table, self.pdf, self.scalecombs, self.ascode, self.norm, self.scale, logfile))
+    self.output().touch()
 

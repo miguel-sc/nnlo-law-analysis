@@ -64,6 +64,8 @@ class HTCondorWorkflow(law.contrib.htcondor.HTCondorWorkflow):
     wlcg_path = luigi.Parameter()
     bootstrap_file = luigi.Parameter()
 
+    outputs_siblings = True
+
     def htcondor_create_job_manager(self):
         return HTCondorJobManager()
 

@@ -15,7 +15,7 @@ class Combine(Task):
 
   def requires(self):
     return {
-      'tables': CopyTables(),
+      'tables': CopyTables()
     }
 
   def output(self):

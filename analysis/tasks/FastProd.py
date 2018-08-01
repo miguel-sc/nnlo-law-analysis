@@ -5,6 +5,7 @@ import luigi
 import os
 import shutil
 
+from law.contrib.htcondor.job import HTCondorJobManager
 from Runcard import Runcard
 from Warmup import Warmup
 from MergeFastWarm import MergeFastWarm
@@ -20,29 +21,17 @@ class FastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
   fastprod_jobs = luigi.Parameter()
   starting_seeds = luigi.Parameter()
 
-  def init_branch(self):
-    i = 0
-    branchmap = {}
-    for j, channel in enumerate(self.channels.split(' ')):
-      for k in xrange(int(self.fastprod_jobs.split(' ')[j])):
-        branchmap[i] = j
-        i += 1
-    i = branchmap[self.branch]
-    self.channel = self.channels.split(' ')[i]
-    self.events = self.fastprod_events.split(' ')[i]
-    self.starting_seed = self.starting_seeds.split(' ')[i]
-    self.number = self.branch
-    for j in range(0, i):
-      self.number -= int(self.fastprod_jobs.split(' ')[j])
-    self.seed = str(self.number + int(self.starting_seed))
-    self.index = i
-
   def create_branch_map(self):
     i = 0
     branchmap = {}
     for j, channel in enumerate(self.channels.split(' ')):
       for k in xrange(int(self.fastprod_jobs.split(' ')[j])):
-        branchmap[i] = j
+        branchmap[i] = {
+          'index': j,
+          'channel': channel,
+          'events': self.fastprod_events.split(' ')[j],
+          'seed': str(k + int(self.starting_seeds.split(' ')[j]))
+        }
         i += 1
     return branchmap
 
@@ -54,15 +43,14 @@ class FastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
    }
 
   def requires(self):
-    self.init_branch()
     return {
-      'warmup': Warmup(branch = self.index),
+      'warmup': Warmup(branch = self.branch_data['index']),
       'fastwarm': MergeFastWarm(),
       'steeringfile': Steeringfile(),
       'runcard': Runcard(
-        channel = self.channel,
-        events = self.events,
-        seed = self.seed,
+        channel = self.branch_data['channel'],
+        events = self.branch_data['events'],
+        seed = self.branch_data['seed'],
         iterations = '1',
         warmup = 'false',
         production = 'true',
@@ -71,11 +59,9 @@ class FastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
     }
 
   def output(self):
-    self.init_branch()
-    return self.remote_target('{}.{}.{}.fastprod.s{}.tar.gz'.format(self.process, self.channel, self.name, self.seed))
+    return self.remote_target('{}.{}.{}.fastprod.s{}.tar.gz'.format(self.process, self.branch_data['channel'], self.name, self.branch_data['seed']))
 
   def run(self):
-    self.init_branch()
     dirpath = 'tmpdir'
     os.mkdir(dirpath)
     prevdir = os.getcwd()

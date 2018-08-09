@@ -32,7 +32,7 @@ class Task(law.Task):
 
 class HTCondorJobManager(law.contrib.htcondor.HTCondorJobManager):
 
-    status_line_cre = re.compile("^(\d+\.\d+)" + 4 * "\s+[^\s]+" + "\s+([UIRXSCHE])\s+.*$")
+    status_line_cre = re.compile("^(\d+\.\d+)" + 4 * "\s+[^\s]+" + "\s+([UIRXSCHE<>])\s+.*$")
 
     def get_htcondor_version(cls):
         return (8, 6, 5)
@@ -43,7 +43,7 @@ class HTCondorJobManager(law.contrib.htcondor.HTCondorJobManager):
             return cls.PENDING
         elif status_flag in ("R"):
             return cls.RUNNING
-        elif status_flag in ("C",):
+        elif status_flag in ("C","<",">"):
             return cls.FINISHED
         elif status_flag in ("H", "E"):
             return cls.FAILED

@@ -19,6 +19,11 @@ class CopyTables(Task, law.LocalWorkflow):
   def requires(self):
     return FastProd(branch = self.branch)
 
+  def workflow_requires(self):
+    return {
+      "fastprod": FastProd()
+    }
+
   def output(self):
     basename = os.path.basename(self.input().path)
     parts = basename.split('.')

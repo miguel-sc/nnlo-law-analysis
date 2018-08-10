@@ -21,6 +21,11 @@ class FnloCppread(Task, law.LocalWorkflow):
   def create_branch_map(self):
     return CopyTables().branch_map
 
+  def workflow_requires(self):
+    return {
+      "copytables": CopyTables()
+    }
+
   def requires(self):
     return CopyTables(branch = self.branch)
 

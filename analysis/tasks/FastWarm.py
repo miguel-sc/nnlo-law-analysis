@@ -94,7 +94,7 @@ class FastWarm(Task, HTCondorWorkflow, law.LocalWorkflow):
     os.system('NNLOJET -run tmp.run | tee {}'.format(logfile))
 
     for file in glob.glob('*.wrm'):
-      os.rename(file, str(self.branch) + '.' + file)
+      os.rename(file, self.branch_data['seed'] + '.' + file)
 
     os.system('tar -czf tmp.tar.gz *.wrm {}'.format(logfile))
 

@@ -29,12 +29,15 @@ class MergeFastWarm(Task):
 
     inputs = self.input()['collection'].targets
     for inp in six.itervalues(inputs):
-      name = os.path.basename(inp.path)
-      with inp.open('r') as infile:
-        with open(name, 'w') as outfile:
-          outfile.write(infile.read())
-      os.system('tar -xzvf ' + name)
-      os.system('rm ' + name)
+      try:
+        name = os.path.basename(inp.path)
+        with inp.open('r') as infile:
+          with open(name, 'w') as outfile:
+            outfile.write(infile.read())
+        os.system('tar -xzvf ' + name)
+        os.system('rm ' + name)
+      except:
+        print name + ' does not exist'
 
     tablenames = []
     for file in glob.glob('*.wrm'):

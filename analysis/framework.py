@@ -27,7 +27,7 @@ class Task(law.Task):
         return os.path.join(*parts)
 
     def remote_target(self, *path):
-        print path
+        #print path
         return law.WLCGFileTarget(self.remote_path(*path),law.WLCGFileSystem(None, self.wlcg_path))
 
 class HTCondorJobManager(law.contrib.htcondor.HTCondorJobManager):
@@ -41,9 +41,9 @@ class HTCondorJobManager(law.contrib.htcondor.HTCondorJobManager):
     def map_status(cls, status_flag):
         if status_flag in ("U", "I", "S"):
             return cls.PENDING
-        elif status_flag in ("R"):
+        elif status_flag in ("R","<",">"):
             return cls.RUNNING
-        elif status_flag in ("C","<",">"):
+        elif status_flag in ("C"):
             return cls.FINISHED
         elif status_flag in ("H", "E"):
             return cls.FAILED

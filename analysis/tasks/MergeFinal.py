@@ -18,7 +18,7 @@ class MergeFinal(Task):
     return MergeFastProd()
 
   def output(self):
-    return law.LocalFileTarget('{}.NNLO.tab.gz'.format(self.process))
+    return self.local_target('MergeFinal')
 
   def run(self):
 
@@ -50,3 +50,4 @@ class MergeFinal(Task):
 
     os.chdir(prevdir)
 
+    self.output().touch()

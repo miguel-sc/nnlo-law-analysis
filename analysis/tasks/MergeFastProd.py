@@ -5,6 +5,7 @@ import law
 import glob
 import os
 import fnmatch
+import shutil
 
 from Combine import Combine
 
@@ -13,11 +14,6 @@ from analysis.framework import Task, HTCondorWorkflow
 class MergeFastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
 
   merge_dir = luigi.Parameter()
-
-  def htcondor_workflow_requires(self):
-    return {
-      'combine': Combine(),
-   }
 
   def create_branch_map(self):
     channels = ['LO', 'R', 'V', 'RRa', 'RRb', 'RV', 'VV']
@@ -39,6 +35,11 @@ class MergeFastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
         i += 1
     return branchmap
 
+  def htcondor_workflow_requires(self):
+    return {
+      'combine': Combine()
+    }
+
   def requires(self):
     return Combine()
 
@@ -55,6 +56,11 @@ class MergeFastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
     parts.append('merge2.log')
     logfile = '.'.join(parts)
 
+    dirpath = 'tmpdir' + str(self.branch)
+    os.mkdir(dirpath)
+    prevdir = os.getcwd()
+    os.chdir(dirpath)
+
     os.system('fnlo-tk-merge2 -w NNLOJET {merge_dir}/{name}/Combined/Final/NNLO.{obs}.APPLfast.txt {merge_dir}/{name}/{channel}/*.{obs}.s*.tab.gz tmp.tab.gz | tee {log}'.format(obs = self.branch_data['obs'], channel = self.branch_data['channel'], merge_dir = self.merge_dir, name = self.name, log = logfile))
 
     with open('tmp.tab.gz', 'r') as infile:
@@ -62,3 +68,6 @@ class MergeFastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
         outfile.write(infile.read())
 
     os.system('rm tmp.tab.gz')
+
+    os.chdir(prevdir)
+    shutil.rmtree(dirpath)

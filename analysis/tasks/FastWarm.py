@@ -6,6 +6,7 @@ import glob
 import os
 import shutil
 
+from BaseRuncard import BaseRuncard
 from Runcard import Runcard
 from Warmup import Warmup
 from Steeringfile import Steeringfile
@@ -37,6 +38,7 @@ class FastWarm(Task, HTCondorWorkflow, law.LocalWorkflow):
   def htcondor_workflow_requires(self):
     return {
       'warmup': Warmup(),
+      'baseruncard': BaseRuncard(),
       'steeringfile': Steeringfile()
     }
 

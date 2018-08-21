@@ -6,6 +6,8 @@ import os
 import shutil
 
 from law.contrib.htcondor.job import HTCondorJobManager
+
+from BaseRuncard import BaseRuncard
 from Runcard import Runcard
 from Warmup import Warmup
 from MergeFastWarm import MergeFastWarm
@@ -37,6 +39,7 @@ class FastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
 
   def htcondor_workflow_requires(self):
     return {
+      'baseruncard': BaseRuncard(),
       'warmup': Warmup(),
       'fastwarm': MergeFastWarm(),
       'steeringfile': Steeringfile()

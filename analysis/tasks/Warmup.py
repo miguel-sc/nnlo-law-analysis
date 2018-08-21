@@ -5,6 +5,7 @@ import luigi
 import os
 import shutil
 
+from BaseRuncard import BaseRuncard
 from Runcard import Runcard
 
 from analysis.framework import Task, HTCondorWorkflow
@@ -27,6 +28,11 @@ class Warmup(Task, HTCondorWorkflow, law.LocalWorkflow):
         'seed': str(i + int(self.starting_seed))
       }
     return branchmap
+
+  def htcondor_workflow_requires(self):
+    return {
+      'baseruncard': BaseRuncard()
+    }
 
   def requires(self):
     return Runcard(

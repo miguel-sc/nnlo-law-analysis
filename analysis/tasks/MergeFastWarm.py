@@ -2,7 +2,6 @@
 
 import luigi
 import six
-import glob
 import os
 import shutil
 
@@ -13,6 +12,8 @@ from analysis.framework import Task
 class MergeFastWarm(Task):
 
   merge_dir = luigi.Parameter()
+  process = luigi.Parameter()
+  observables = luigi.ListParameter()
 
   def requires(self):
     return FastWarm()
@@ -39,20 +40,12 @@ class MergeFastWarm(Task):
       except:
         print name + ' does not exist'
 
-    tablenames = []
-    for file in glob.glob('*.wrm'):
-      fileparts = file.split('.')
-      obs = fileparts[3]
-      scen = fileparts[1]
-      if obs not in tablenames:
-        tablenames.append(obs)
-
     os.system('rm *.log')
    
-    for obs in tablenames:
-      os.system('perl $ANALYSIS_PATH/scripts/fnlo-add-warmup.pl -v 2.4 -w . -o {scen}.{obs}.wrm {scen} {obs} | tee {scen}.{obs}.addwarmup.log'.format(scen = scen, obs = obs))
+    for obs in self.observables:
+      os.system('fnlo-add-warmup_v23.pl -d -v 2.4 -w . -o {proc}.{obs}.wrm {obs} | tee {proc}.{obs}.addwarmup.log'.format(proc = self.process, obs = obs))
 
-    os.system('tar -czf tmp.tar.gz ' + scen + '.*.wrm *.log')
+    os.system('tar -czf tmp.tar.gz ' + self.process + '.*.wrm *.log')
 
     with open('tmp.tar.gz') as infile:
       with self.output().open('w') as outfile:

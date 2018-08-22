@@ -2,9 +2,7 @@
 
 import luigi
 import law
-import glob
 import os
-import fnmatch
 import shutil
 
 from Combine import Combine
@@ -14,20 +12,15 @@ from analysis.framework import Task, HTCondorWorkflow
 class MergeFastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
 
   merge_dir = luigi.Parameter()
+  channels = luigi.Parameter()
+  observables = luigi.ListParameter()
 
   def create_branch_map(self):
-    channels = ['LO', 'R', 'V', 'RRa', 'RRb', 'RV', 'VV']
-    tablenames = []
-    for file in glob.glob('{}/{}/*/*.tab.gz'.format(self.merge_dir, self.name)):
-      fileparts = file.split('.')
-      obs = fileparts[3]
-      scen = fileparts[0]
-      if obs not in tablenames:
-        tablenames.append(obs)
+    channels = self.channels.split(' ')
     i = 0
     branchmap = {}
     for channel in channels:
-      for obs in sorted(tablenames):
+      for obs in self.observables:
         branchmap[i] = {
           'obs': obs,
           'channel': channel

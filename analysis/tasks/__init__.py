@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import BaseRuncard
-import BaseSteeringfile
 import Runcard
-import Steeringfile
 import Warmup
 import FastWarm
 import MergeFastWarm
@@ -15,3 +13,4 @@ import MergeFinal
 import FnloCppread
 import FnloCppreadFinal
 import Steeringfiles
+import test

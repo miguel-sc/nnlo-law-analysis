@@ -4,6 +4,8 @@ import law
 import luigi
 import os
 import shutil
+import re
+from fnmatch import fnmatch
 
 from BaseRuncard import BaseRuncard
 from Runcard import Runcard
@@ -54,10 +56,9 @@ class Warmup(Task, HTCondorWorkflow, law.LocalWorkflow):
     os.chdir(dirpath)
 
     self.output().parent.touch()
-    name = os.path.basename(self.input().path)
-    with self.input().open('r') as infile:
-      with open(name, 'w') as outfile:
-        outfile.write(infile.read())
+
+    with open('tmp.run', 'w') as outfile:
+      outfile.write(self.input().load(formatter='text'))
 
     os.environ['OMP_NUM_THREADS'] = self.htcondor_request_cpus
 
@@ -68,12 +69,10 @@ class Warmup(Task, HTCondorWorkflow, law.LocalWorkflow):
     parts.append('log')
     logfile = '.'.join(parts)
 
-    os.system('NNLOJET -run ' + name + ' | tee ' + logfile)
-    os.system('tar -czf tmp.tar.gz *{}*'.format(self.branch_data['channel']))
-    with open('tmp.tar.gz') as infile:
-      with self.output().open('w') as outfile:
-        data = infile.read()
-        outfile.write(data)
+    os.system('NNLOJET -run tmp.run | tee {}'.format(logfile))
+
+    tarfilter = lambda n : n if fnmatch(n.name, '*{}*'.format(self.branch_data['channel'])) else None
+    self.output().dump(os.getcwd(), filter=tarfilter)
 
     os.chdir(prevdir)
     shutil.rmtree(dirpath)

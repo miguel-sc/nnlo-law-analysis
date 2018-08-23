@@ -4,6 +4,7 @@ import law
 import luigi
 import os
 import shutil
+from fnmatch import fnmatch
 
 from law.contrib.htcondor.job import HTCondorJobManager
 
@@ -11,7 +12,7 @@ from BaseRuncard import BaseRuncard
 from Runcard import Runcard
 from Warmup import Warmup
 from MergeFastWarm import MergeFastWarm
-from Steeringfile import Steeringfile
+from Steeringfiles import Steeringfiles
 
 from analysis.framework import Task, HTCondorWorkflow
 
@@ -42,14 +43,14 @@ class FastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
       'baseruncard': BaseRuncard(),
       'warmup': Warmup(),
       'fastwarm': MergeFastWarm(),
-      'steeringfile': Steeringfile()
+      'steeringfiles': Steeringfiles()
    }
 
   def requires(self):
     return {
       'warmup': Warmup(branch = self.branch_data['index']),
       'fastwarm': MergeFastWarm(),
-      'steeringfile': Steeringfile(),
+      'steeringfiles': Steeringfiles(),
       'runcard': Runcard(
         channel = self.branch_data['channel'],
         events = self.branch_data['events'],
@@ -65,37 +66,20 @@ class FastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
     return self.remote_target('{}.{}.{}.fastprod.s{}.tar.gz'.format(self.process, self.branch_data['channel'], self.name, self.branch_data['seed']))
 
   def run(self):
-    dirpath = 'tmpdir'
+    dirpath = 'tmpdir' + self.branch_data['seed']
     os.mkdir(dirpath)
     prevdir = os.getcwd()
     os.chdir(dirpath)
 
     self.output().parent.touch()
 
-    warmup = self.input()['warmup']
-    with warmup.open('r') as infile:
-      with open('warmup.tar.gz', 'w') as outfile:
-        outfile.write(infile.read())
+    self.input()['warmup'].load('')
+    self.input()['fastwarm'].load('')
+    self.input()['steeringfiles'].load('')
 
-    fastwarm = self.input()['fastwarm']
-    with fastwarm.open('r') as infile:
-      with open('fastwarm.tar.gz', 'w') as outfile:
-        outfile.write(infile.read())
+    with open('tmp.run', 'w') as outfile:
+      outfile.write(self.input()['runcard'].load(formatter='text'))
 
-    runcard = self.input()['runcard']
-    with runcard.open('r') as infile:
-      with open('tmp.run', 'w') as outfile:
-        outfile.write(infile.read())
-
-    steeringfile = self.input()['steeringfile']
-    steeringname = os.path.basename(steeringfile.path)
-    with steeringfile.open('r') as infile:
-      with open(steeringname, 'w') as outfile:
-        outfile.write(infile.read())
-
-    os.system('tar -xzvf warmup.tar.gz')
-    os.system('tar -xzvf fastwarm.tar.gz')
-    
     outfile = os.path.basename(self.output().path)
     parts = outfile.split('.')
     parts.pop()
@@ -105,18 +89,8 @@ class FastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
 
     os.system('NNLOJET -run tmp.run | tee {}'.format(logfile))
 
-    # for tab in glob.glob('*.tab.gz'):
-    #   parts = tab.split('.')
-    #   parts[1] = self.channel
-    #   del parts[2]
-    #   newtab = '.'.join(parts)      
-    #   os.rename(tab, newtab)
-
-    os.system('tar -czf tmp.tar.gz *.tab.gz *.dat {}'.format(logfile))
-
-    with open('tmp.tar.gz') as infile:
-      with self.output().open('w') as outfile:
-        outfile.write(infile.read())
+    tarfilter = lambda n : n if (fnmatch(n.name, '*.tab.gz') or fnmatch(n.name, '*.dat') or fnmatch(n.name, logfile)) else None
+    self.output().dump(os.getcwd(), filter=tarfilter)
 
     os.chdir(prevdir)
     shutil.rmtree(dirpath)

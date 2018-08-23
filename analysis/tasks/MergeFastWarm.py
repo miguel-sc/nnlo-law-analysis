@@ -31,14 +31,9 @@ class MergeFastWarm(Task):
     inputs = self.input()['collection'].targets
     for inp in six.itervalues(inputs):
       try:
-        name = os.path.basename(inp.path)
-        with inp.open('r') as infile:
-          with open(name, 'w') as outfile:
-            outfile.write(infile.read())
-        os.system('tar -xzvf ' + name)
-        os.system('rm ' + name)
+        inp.load('')
       except:
-        print name + ' does not exist'
+        print 'file does not exist'
 
     os.system('rm *.log')
    

@@ -56,9 +56,8 @@ class Runcard(Task):
       '@REGION@': region,
       '@UNIT_PHASE@': self.unit_phase
     }
-    with self.input().open('r') as infile:
-      with self.output().open('w') as outfile:
-        data = infile.read()
-        for key, value in substitutions.iteritems():
-          data = data.replace(key, value)
-        outfile.write(data)
+
+    data = self.input().load(formatter='text')
+    for key, value in substitutions.iteritems():
+      data = data.replace(key, value)
+    self.output().dump(data, formatter='text')

@@ -12,6 +12,7 @@ class Combine(Task):
 
   merge_dir = luigi.Parameter()
   cores = luigi.Parameter()
+  combine_ini = luigi.Parameter()
 
   def requires(self):
     return {
@@ -26,16 +27,9 @@ class Combine(Task):
 
     self.output().parent.touch()
 
-    #combine_ini = self.input()['combine_ini']
-    #with combine_ini.open('r') as infile:
-    #  os.chdir(self.merge_dir + '/' + self.name)
-    #  with open('combine.ini', 'w') as outfile:
-    #    outfile.write(infile.read())
-
     os.chdir('{}/{}'.format(self.merge_dir, self.name))
-    analysis_path = os.environ['ANALYSIS_PATH']
 
-    os.system('nnlojet-combine.py -C {}/combine.ini -j {} | tee tmp.log'.format(analysis_path, self.cores))
+    os.system('nnlojet-combine.py -C {} -j {} | tee tmp.log'.format(self.combine_ini, self.cores))
 
     for root, dirnames, filenames in os.walk('.'):
       for filename in fnmatch.filter(filenames, '*.APPLfast.txt'):
@@ -47,11 +41,10 @@ class Combine(Task):
           parts.insert(0, self.process)
           endfile = '.'.join(parts)
           print endfile
-          os.system('nnlojet-combine.py -C {}/combine.ini --APPLfast Combined/Final/{} > Combined/Final/{}'.format(analysis_path, filename, endfile))
+          os.system('nnlojet-combine.py -C {} --APPLfast Combined/Final/{} > Combined/Final/{}'.format(self.combine_ini, filename, endfile))
 
     with open('tmp.log', 'r') as infile:
-      with self.output().open('w') as outfile:
-        outfile.write(infile.read())
+      self.output().dump(infile.read(), formatter="text")
 
     os.system('rm tmp.log')
 

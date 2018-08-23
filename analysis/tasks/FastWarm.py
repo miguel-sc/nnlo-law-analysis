@@ -5,11 +5,12 @@ import luigi
 import glob
 import os
 import shutil
+from fnmatch import fnmatch
 
 from BaseRuncard import BaseRuncard
 from Runcard import Runcard
 from Warmup import Warmup
-from Steeringfile import Steeringfile
+from Steeringfiles import Steeringfiles
 
 from analysis.framework import Task, HTCondorWorkflow
 
@@ -39,13 +40,13 @@ class FastWarm(Task, HTCondorWorkflow, law.LocalWorkflow):
     return {
       'warmup': Warmup(),
       'baseruncard': BaseRuncard(),
-      'steeringfile': Steeringfile()
+      'steeringfiles': Steeringfiles()
     }
 
   def requires(self):
     return {
       'warmup': Warmup(branch = self.branch_data['index']),
-      'steeringfile': Steeringfile(),
+      'steeringfiles': Steeringfiles(),
       'runcard': Runcard(
         channel = self.branch_data['channel'],
         events = self.branch_data['events'],
@@ -61,30 +62,18 @@ class FastWarm(Task, HTCondorWorkflow, law.LocalWorkflow):
     return self.remote_target('{}.{}.{}.fastwarm.s{}.tar.gz'.format(self.process, self.branch_data['channel'], self.name, self.branch_data['seed']))
 
   def run(self):
-    dirpath = 'tmpdir'
+    dirpath = 'tmpdir' + self.branch_data['seed']
     os.mkdir(dirpath)
     prevdir = os.getcwd()
     os.chdir(dirpath)
 
     self.output().parent.touch()
 
-    warmup = self.input()['warmup']
-    with warmup.open('r') as infile:
-      with open('warmup.tar.gz', 'w') as outfile:
-        outfile.write(infile.read())
+    self.input()['warmup'].load('')
+    self.input()['steeringfiles'].load('')
 
-    runcard = self.input()['runcard']
-    with runcard.open('r') as infile:
-      with open('tmp.run', 'w') as outfile:
-        outfile.write(infile.read())
-
-    steeringfile = self.input()['steeringfile']
-    steeringname = os.path.basename(steeringfile.path)
-    with steeringfile.open('r') as infile:
-      with open(steeringname, 'w') as outfile:
-        outfile.write(infile.read())
-
-    os.system('tar -xzvf warmup.tar.gz')
+    with open('tmp.run', 'w') as outfile:
+      outfile.write(self.input()['runcard'].load(formatter='text'))
 
     outfile = os.path.basename(self.output().path)
     parts = outfile.split('.')
@@ -98,11 +87,8 @@ class FastWarm(Task, HTCondorWorkflow, law.LocalWorkflow):
     for file in glob.glob('*.wrm'):
       os.rename(file, self.branch_data['seed'] + '.' + file)
 
-    os.system('tar -czf tmp.tar.gz *.wrm {}'.format(logfile))
-
-    with open('tmp.tar.gz') as infile:
-      with self.output().open('w') as outfile:
-        outfile.write(infile.read())
+    tarfilter = lambda n : n if (fnmatch(n.name, '*.wrm') or fnmatch(n.name, logfile)) else None
+    self.output().dump(os.getcwd(), filter=tarfilter)
 
     os.chdir(prevdir)
     shutil.rmtree(dirpath)

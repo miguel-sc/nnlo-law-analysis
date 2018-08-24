@@ -23,7 +23,7 @@ class FnloCppread(Task, law.LocalWorkflow):
 
   def workflow_requires(self):
     return {
-      "copytables": CopyTables()
+      'copytables': CopyTables()
     }
 
   def requires(self):

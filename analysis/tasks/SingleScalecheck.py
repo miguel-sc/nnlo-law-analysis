@@ -39,7 +39,7 @@ class SingleScalecheck(Task, law.LocalWorkflow):
     return FnloCppread()
 
   def output(self):
-    return law.LocalDirectoryTarget('{}/SingleScalecheck/{}/{}'.format(self.plots_dir, self.branch_data['channel'], self.branch_data['observable']))
+    return law.LocalDirectoryTarget('{}/{}/SingleScalecheck/{}/{}'.format(self.plots_dir, self.name, self.branch_data['channel'], self.branch_data['observable']))
 
   def run(self):
     self.output().touch()
@@ -49,6 +49,7 @@ class SingleScalecheck(Task, law.LocalWorkflow):
       parts.pop()
       parts.append('log')
       logfile = '.'.join(parts)
+      outfile = '{}/{}.{}.{}'.format(self.output().path, self.process, self.branch_data['channel'], self.branch_data['observable'])
 
-      os.system('fastnnlo_scalecheck_v2.py -d {} -l {} -o {}/{}.{}.{}'.format(datfile, logfile, self.output().path, self.process, self.branch_data['channel'], self.branch_data['observable']))
+      os.system('fastnnlo_scalecheck_v2.py -d {} -l {} -o {}'.format(datfile, logfile, outfile))
 

@@ -16,7 +16,6 @@ class Approxtest(Task, law.LocalWorkflow):
   channels = luigi.Parameter()
   plots_dir = luigi.Parameter()
   observables = luigi.ListParameter()
-  fscl = luigi.Parameter()
 
   def create_branch_map(self):
     branchmap = {}
@@ -46,5 +45,5 @@ class Approxtest(Task, law.LocalWorkflow):
     datfile = glob.glob('{}/{}/{}/*{}*.dat'.format(self.merge_dir, self.name, self.branch_data['channel'], self.branch_data['observable']))[0]
     outfile = '{}/{}.{}.{}'.format(self.output().path, self.process, self.branch_data['channel'], self.branch_data['observable'])
 
-    os.system('fastnnlo_approxtest_v2.py -d {} -w {} -f {} -o {}'.format(datfile, weightfile, self.fscl, outfile))
+    os.system('fastnnlo_approxtest_v2.py -v -d {} -w {} -o {}'.format(datfile, weightfile, outfile))
 

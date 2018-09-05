@@ -6,6 +6,7 @@ import law
 from SingleScalecheck import SingleScalecheck
 from Absolute import Absolute
 from AbsoluteAll import AbsoluteAll
+from Approxtest import Approxtest
 
 class AllPlots(law.WrapperTask):
 
@@ -13,5 +14,6 @@ class AllPlots(law.WrapperTask):
     return {
       'singlescalecheck': SingleScalecheck(),
       'absolute': Absolute(),
-      'absoluteall': AbsoluteAll()
+      'absoluteall': AbsoluteAll(),
+      'approxtest': Approxtest()
     }

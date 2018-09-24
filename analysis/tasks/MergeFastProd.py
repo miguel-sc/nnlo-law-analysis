@@ -5,6 +5,9 @@ import law
 import os
 import shutil
 
+from subprocess import PIPE
+from law.util import interruptable_popen
+
 from Combine import Combine
 
 from analysis.framework import Task, HTCondorWorkflow
@@ -49,5 +52,12 @@ class MergeFastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
     parts.append('merge2.log')
     logfile = '.'.join(parts)
 
-    os.system('fnlo-tk-merge2 -w NNLOJET {merge_dir}/{name}/Combined/Final/NNLO.{obs}.APPLfast.txt {merge_dir}/{name}/{channel}/*.{obs}.s*.tab.gz {out} | tee {log}'.format(obs = self.branch_data['obs'], channel = self.branch_data['channel'], merge_dir = self.merge_dir, name = self.name, log = logfile, out = outfile))
+    weightfile = '{}/{}/Combined/Final/NNLO.{}.APPLfast.txt'.format(self.merge_dir, self.name, self.branch_data['obs'])
+    tablenames = '{}/{}/{}/*.{}.s*.tab.gz'.format(self.merge_dir, self.name, self.branch_data['channel'], self.branch_data['obs'])
+
+    code, out, error = interruptable_popen('fnlo-tk-merge2 -w NNLOJET {} {} {}'.format(weightfile, tablenames, outfile), shell=True, stdout=PIPE, stderr=PIPE)
+    with open(logfile, 'w') as outfile:
+      outfile.write(out)
+    if (code != 0):
+      raise Exception(error + 'fnlo-tk-merge2 returned non-zero exit status {}'.format(code))
 

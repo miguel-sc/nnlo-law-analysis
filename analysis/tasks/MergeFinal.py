@@ -5,6 +5,9 @@ import law
 import os
 import shutil
 
+from subprocess import PIPE
+from law.util import interruptable_popen
+
 from MergeFastProd import MergeFastProd
 
 from analysis.framework import Task
@@ -51,5 +54,9 @@ class MergeFinal(Task, law.LocalWorkflow):
     tablestring = ''
     for channel in self.branch_data['channels']:
       tablestring += '{}/{}/Combined/Final/{}.{}.{}.tab.gz '.format(self.merge_dir, self.name, self.process, channel, self.branch_data['obs'])
-    os.system('fnlo-tk-merge2 -add {}{} | tee {}'.format(tablestring, outfile, logfile))
 
+    code, out, error = interruptable_popen('fnlo-tk-merge2 -add {}{}'.format(tablestring, outfile), shell=True, stdout=PIPE, stderr=PIPE)
+    with open(logfile, 'w') as outfile:
+      outfile.write(out)
+    if (code != 0):
+      raise Exception(error + 'fnlo-tk-merge2 returned non-zero exit status {}'.format(code))

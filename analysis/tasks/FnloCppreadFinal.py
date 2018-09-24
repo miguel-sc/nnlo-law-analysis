@@ -5,6 +5,9 @@ import luigi
 import os
 import glob
 
+from subprocess import PIPE
+from law.util import interruptable_popen
+
 from MergeFinal import MergeFinal
 
 from analysis.framework import Task
@@ -61,5 +64,9 @@ class FnloCppreadFinal(Task, law.LocalWorkflow):
     parts.append('tab.gz')
     table = '.'.join(parts)
 
-    os.system('fnlo-tk-cppread {} {} {} {} {} {} | tee {}'.format(table, self.pdf, self.scalecombs, self.ascode, self.norm, self.scale, logfile))
+    code, out, error = interruptable_popen(['fnlo-tk-cppread', table, self.pdf, self.scalecombs, self.ascode, self.norm, self.scale],stdout=PIPE, stderr=PIPE)
+    with open(logfile, 'w') as outfile:
+      outfile.write(out)
+    if (code != 0):
+      raise Exception(error + 'fnlo-tk-cppread returned non-zero exit status {}'.format(code))
 

@@ -5,6 +5,9 @@ import luigi
 import os
 import glob
 
+from subprocess import PIPE
+from law.util import interruptable_popen
+
 from CopyTables import CopyTables
 
 from analysis.framework import Task
@@ -36,13 +39,18 @@ class FnloCppread(Task, law.LocalWorkflow):
     table = self.input().path
     parts = os.path.basename(table).split('.')
 
-    for table in glob.glob(self.merge_dir + '/' + self.name + '/' + self.branch_data['channel'] + '/*' + self.branch_data['seed'] + '*.tab.gz'):
+    for table in glob.glob(self.merge_dir + '/' + self.name + '/' + self.branch_data['channel'] + '/*.s' + self.branch_data['seed'] + '.tab.gz'):
       parts = table.split('.')
       parts.pop()
       parts.pop()
+      parts.append('log')
       logfile = '.'.join(parts)
 
-      os.system('fnlo-tk-cppread {} {} {} {} {} {} | tee {}.log'.format(table, self.pdf, self.scalecombs, self.ascode, self.norm, self.scale, logfile))
+      code, out, error = interruptable_popen(['fnlo-tk-cppread', table, self.pdf, self.scalecombs, self.ascode, self.norm, self.scale],stdout=PIPE, stderr=PIPE)
+      with open(logfile, 'w') as outfile:
+        outfile.write(out)
+      if (code != 0):
+        raise Exception(error + 'fnlo-tk-cppread returned non-zero exit status {}'.format(code))
 
     self.output().touch()
 

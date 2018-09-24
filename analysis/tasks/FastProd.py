@@ -5,6 +5,8 @@ import luigi
 import os
 import shutil
 from fnmatch import fnmatch
+from subprocess import PIPE
+from law.util import interruptable_popen
 
 from law.contrib.htcondor.job import HTCondorJobManager
 
@@ -87,7 +89,11 @@ class FastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
     parts.append('log')
     logfile = '.'.join(parts)
 
-    os.system('NNLOJET -run tmp.run | tee {}'.format(logfile))
+    code, out, error = interruptable_popen(['NNLOJET', '-run', 'tmp.run'],stdout=PIPE, stderr=PIPE)
+    with open(logfile, 'w') as outfile:
+      outfile.write(out)
+    if (code != 0):
+      raise Exception(error + 'NNLOJET returned non-zero exit status {}'.format(code))
 
     tarfilter = lambda n : n if (fnmatch(n.name, '*.tab.gz') or fnmatch(n.name, '*.dat') or fnmatch(n.name, logfile)) else None
     self.output().dump(os.getcwd(), filter=tarfilter)

@@ -5,6 +5,8 @@ import six
 import os
 import shutil
 from fnmatch import fnmatch
+from subprocess import PIPE
+from law.util import interruptable_popen
 
 from FastWarm import FastWarm
 
@@ -39,7 +41,13 @@ class MergeFastWarm(Task):
     os.system('rm *.log')
    
     for obs in self.observables:
-      os.system('fnlo-add-warmup_v23.pl -d -v 2.4 -w . -o {proc}.{obs}.wrm {obs} | tee {proc}.{obs}.addwarmup.log'.format(proc = self.process, obs = obs))
+      table = '{}.{}.wrm'.format(self.process, obs)
+      logfile = '{}.{}.addwarmup.log'.format(self.process, obs)
+      code, out, error = interruptable_popen(['fnlo-add-warmup_v23.pl', '-d', '-v', '2.4', '-w', '.', '-o', table, obs],stdout=PIPE, stderr=PIPE)
+      with open(logfile, 'w') as outfile:
+        outfile.write(out)
+      if (code != 0):
+        raise Exception(error + 'fnlo-add-warmup returned non-zero exit status {}'.format(code))
 
     tarfilter = lambda n : n if (fnmatch(n.name, '{}.*.wrm'.format(self.process)) or fnmatch(n.name, '*.log')) else None
     self.output().dump(os.getcwd(), filter=tarfilter)

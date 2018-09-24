@@ -3,6 +3,8 @@
 import luigi
 import os
 import fnmatch
+from subprocess import PIPE
+from law.util import interruptable_popen
 
 from CopyTables import CopyTables
 
@@ -29,7 +31,9 @@ class Combine(Task):
 
     os.chdir('{}/{}'.format(self.merge_dir, self.name))
 
-    os.system('nnlojet-combine.py -C {} -j {} | tee tmp.log'.format(self.combine_ini, self.cores))
+    code, job_out, error = interruptable_popen(['nnlojet-combine.py', '-C', self.combine_ini, '-j', self.cores],stdout=PIPE, stderr=PIPE)
+    if (code != 0):
+      raise Exception(error + 'nnlojet-combine returned non-zero exit status {}'.format(code))
 
     for root, dirnames, filenames in os.walk('.'):
       for filename in fnmatch.filter(filenames, '*.APPLfast.txt'):
@@ -40,13 +44,12 @@ class Combine(Task):
           parts.append('dat')
           parts.insert(0, self.process)
           endfile = '.'.join(parts)
-          print endfile
-          os.system('nnlojet-combine.py -C {} --APPLfast Combined/Final/{} > Combined/Final/{}'.format(self.combine_ini, filename, endfile))
+          
+          code, out, error = interruptable_popen('nnlojet-combine.py -C {} --APPLfast Combined/Final/{} > Combined/Final/{}'.format(self.combine_ini, filename, endfile), shell=True ,stdout=PIPE, stderr=PIPE)
+          if (code != 0):
+            raise Exception(error + 'NNLOJET returned non-zero exit status {}'.format(code))
 
-    with open('tmp.log', 'r') as infile:
-      self.output().dump(infile.read(), formatter="text")
-
-    os.system('rm tmp.log')
+    self.output().dump(job_out, formatter="text")
 
     os.chdir(prevdir)
 

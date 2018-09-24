@@ -28,7 +28,7 @@ class MergeFastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
         i += 1
     return branchmap
 
-  def htcondor_workflow_requires(self):
+  def workflow_requires(self):
     return {
       'combine': Combine()
     }

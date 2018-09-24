@@ -31,7 +31,7 @@ class Warmup(Task, HTCondorWorkflow, law.LocalWorkflow):
       }
     return branchmap
 
-  def htcondor_workflow_requires(self):
+  def workflow_requires(self):
     return {
       'baseruncard': BaseRuncard()
     }

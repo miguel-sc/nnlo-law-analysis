@@ -38,7 +38,7 @@ class FastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
         i += 1
     return branchmap
 
-  def htcondor_workflow_requires(self):
+  def workflow_requires(self):
     return {
       'baseruncard': BaseRuncard(),
       'warmup': Warmup(),

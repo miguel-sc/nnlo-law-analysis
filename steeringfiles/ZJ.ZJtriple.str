@@ -1,0 +1,201 @@
+# -*-sh-*-
+# ==================================================================== #
+#
+#   A steering file for creating a fastNLO table/grid (with NNLOJET)
+#
+#   The grid production is performed in three steps:
+#   I.   A warmup run for NNLOJET to perform essential integrations
+#        See NNLOJET for details. fastNLO is not used or called at this stage.
+#   II.  A warmup run for fastNLO that determines the accessed phase space
+#        in momentum fraction x and process scale mu_r, mu_f.
+#        Only a few fastNLO settings are used here, see below.
+#        The output is written into a warmup file named after the
+#        the NNLOJET process name, e.g. 'ZJ', the NNLOJET job name, e.g.
+#        'LO-CMS13', and the NNLOJET grid name, e.g.
+#        ptz > ZJtriple_yb0_ystar0_ptz [30, 100, 200, 300, 400, 1000] grid = ZJtriple_yb0_ystar0_ptz.fast
+#              NNLOJET histo                                                 fastNLO grid
+#        ==> ZJ.LO-CMS13.ZJtriple_yb0_ystar0_ptz.wrm
+#        This warmup file stores some settings for fastNLO in addition to
+#        the accessed phase space (with number of events per bin!) for
+#        each order of NNLOJET run (LO, R, V, RRa, RRb, RV, VV).
+#        For a later combination ALL production runs in step III below
+#        MUST use the SAME warmup file. The latter should be the largest
+#        accessed phase space as combined from any order in NNLOJET!
+#        ==> the expected filename for this unique warmup file is
+#            ZJ.ZJtriple_yb0_ystar0_ptz.wrm
+#        without the job name info.
+#   III. Many production runs filling fastNLO grids for various orders
+#        of a process from NNLOJET that later must be combined.
+#        See NNLOJET for details.
+#        Most fastNLO settings are taken into account here.
+#
+#   This steering file has to be used in combination with a NNLOJET
+#   run card, where most of the essential seetings like the
+#   observable and its binning are defined.
+#   Modifications or additional settings respect the following hierarchy:
+#   1.  From the interface package nnlo-bridge default settings for
+#       fastNLO with NNLOJET are made and information from NNLOJET is
+#       passed to fastNLO.
+#   2.  A steering file named after the NNLOJET grid name for fastNLO,
+#       e.g. from the example above
+#             ==> ZJ.ZJtriple_yb0_ystar0_ptz.str
+#       can be used to set steer parameters individually for each fastNLO grid.
+#       Settings from step 1 can be overwritten. Be careful not to make
+#       changes inconsistent with what is defined in the NNLOJET run card
+#       or what is mandatory for the interface to work!
+#   3a. In production runs the previously derived warmup file is read.
+#   3b. A global steering file named after only the first part of
+#       the NNLOJET grid name for fastNLO, 'ZJtriple', which is also used
+#       as fastNLO scenario name,
+#             ==> ZJ.ZJtriple.str
+#       can be used to set steer parameters globally for all fastNLO grids.
+#       Settings from step 2 are not overwritten, but lead to warnings.
+#   4.  In principal, parameters can also be set on the command line, but
+#       this has not been tested yet.
+#
+# ==================================================================== #
+
+# ==================================================================== #
+#
+#   Scenario specific settings
+#
+#   Either set individually for each fastNLO grid or globally for all
+#
+# ==================================================================== #
+
+# -------------------------------------------------------------------- #
+#   Settings to be modified already for Warmup
+#   (These are stored in the warmup file!)
+# -------------------------------------------------------------------- #
+#CheckScaleLimitsAgainstBins     true             # (def.=true) Set limits for scale nodes to bin borders, if possible. Good if scale equals the binned observable.
+                                                  # Scales and scale factors must be set in the NNLOJET run card
+ScaleDescriptionScale1          "etz_[GeV]"         # (def.='scale1') Reset the 1st scale name and unit, e.g. "<pT_1,2>_[GeV]" (Note: The 1st scale must always be in units of [GeV]!)
+ScaleDescriptionScale2          "zht_[GeV]"         # (def.='scale2') Reset the 2nd scale name and unit (ONLY for flexible-scale tables)
+#DifferentialDimension             1              # (must be 1) So far the interface to NNLOJET supports only 1-dim histograms. DO NOT CHANGE!
+#DimensionLabels {                                # Labels (symbol and unit) for the measurement dimension (from outer to inner "loop")
+#   "pTZ_[GeV]"                                   # The default following the example above would be: "ptz"
+#}
+#DimensionIsDifferential {                        # (must be 2) Specify for each dimension whether
+#   2                                             #   0 : the cross section is NOT differential,        i.e. there are two bin borders,
+#}                                                #                                                     but NO division (normalization) by bin width
+                                                  #   1 : the cross section is point-wise differential, i.e. only one point is given
+                                                  #   2 : the cross section is bin-wise differential,   i.e. there are two bin borders
+                                                  # Since NNLOJET provides bin-wise differential distributions use option 2. DO NOT CHANGE!
+
+# -------------------------------------------------------------------- #
+#   Description of scenario
+#
+#   (Write each line of description in quotation marks)
+# -------------------------------------------------------------------- #
+ScenarioName ZJ.ZJtriple                         # (def.=NNLOJET process name) No white space allowed here!
+#ScenarioDescription {                            # Replace generic one-line text by desired (multi-line) description
+#    "d3sigma-dpTZ_dyb_dys_[pb_GeV]"
+#    "CMS_Collaboration"
+#    "Triple_Diff_ZJets"
+#    "anti-kT_R=0.4"
+#    "THEORY_LABEL=NNLOJET"
+#    "provided by:"
+#    "fastNLO_2.3.1"
+#    "If you use this table, please cite:"
+#    "  D. Britzger, T. Kluge, K. Rabbertz, F. Stober, M. Wobisch, arXiv:1109.1310"
+#}
+PublicationUnits                12               # (def.=12) Cross section unit to be used for output (negative power of 10, e.g. 12->pb, 15->fb)
+                                                 # For comparison, e.g. via Rivet, should correspond to published data cross sections
+
+# -------------------------------------------------------------------- #
+#   Cuts
+# -------------------------------------------------------------------- #
+# To bet set via NNLOJET run card
+
+# -------------------------------------------------------------------- #
+#   Observable normalization
+# -------------------------------------------------------------------- #
+#CalculateBinSize               true              # (def.=true)    Calculate bin width from lower and upper bin boundaries
+#BinSizeFactor                    1.              # (def.=1.)      Possibility to provide additional normalization factor, e.g. of 2. for bins in |y|
+#BinSize { x1 x2 x3 ... }                         # (def. not set) If 'CalculateBinSize' is 'false' provide table with bin widths 'by hand' for normalization
+
+# -------------------------------------------------------------------- #
+#   Observable binning
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#   Use either 'SingleDifferentialBinning' or
+#     'DoubleDifferentialBinning' or
+#     'TripleDifferentialBinning'
+#   in accord with 'DifferentialDimension' above
+# -------------------------------------------------------------------- #
+# To bet set via the NNLOJET run card
+
+# ==================================================================== #
+#
+#   Process specific and therefore at least partially theory-code
+#   dependent settings
+#
+# ==================================================================== #
+# To bet set directly from NNLOJET interface and via the NNLOJET run card
+
+# ==================================================================== #
+#
+#   A few special settings only used with NNLOJET so far
+#
+# ==================================================================== #
+#Inclusive Jets                  false            # (def.=false) Flag to store one entry per jet, not just one per event
+#                                                 # Must be set in accordance with NNLOJET run card!
+
+# ==================================================================== #
+#
+#   General fastNLO settings
+#
+# ==================================================================== #
+GlobalVerbosity                 INFO             # (def.=WARNING) Global output verbosity of fastNLO toolkit,
+                                                 # (and of user scenario code if implemented).
+                                                 # Possible values are: DEBUG, MANUAL, INFO, WARNING, ERROR, SILENT
+FlexibleScaleTable              true            # (def.=false) Create table fully flexible in mu_f (larger size), true, or
+                                                  # table with fixed number of mu_f scale factors
+
+# ==================================================================== #
+#
+#   Specific fastNLO settings (normally do not need to be changed)
+#   Only change when you know what you are doing ...!
+#
+# ==================================================================== #
+#OutputFilename           fastNLO.tab             # Overwrites default filename of fastNLO output table, e.g. ZJ.LO-CMS13.vBa.ZJtriple_yb0_ystar0_ptz.s92394.tab.gz
+#OutputPrecision                 8                # (def.=8) Number of decimal digits to store in output table
+#OutputCompression               true             # (def.=true) Write out fastNLO table/grid in gzipped format (requires zlib)
+#ScaleVariationFactors {                          # (def.=1.0 0.5 2.0) Must be set in accordance with NNLOJET run card! Factorization scale variations (only needed for fixed-scale tables)
+#  1.0 0.5 2.0                                    # List of scale factors must include factor '1.0'
+#}                                                # Scale factors will be ordered according to fastNLO convention: (1, min, ... , max)
+#ReadBinningFromSteering         false            # (must be true) Specify where the binning is defined.
+#ApplyPDFReweighting             true             # (def.=true) Apply reweighting of PDFs for an optimized interpolation
+
+# -------------------------------------------------------------------- #
+#   Choose fastNLO interpolation kernels and distance measures
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#   Currently implemented interpolation kernels
+#     Catmull
+#     Lagrange
+#     OneNode
+#     Linear
+#
+#   Currently implemented distance measures
+#     linear
+#     loglog025        eq. to (log(log(4*x)))
+#     log10
+#     sqrtlog10        eq. to sqrt(log_10(x))
+#
+#   For a constant scale like M_Z use e.g.
+#     Mu1_Kernel                      OneNode
+#     Mu1_DistanceMeasure             "log10"
+#     Mu1_NNodes                      1
+# -------------------------------------------------------------------- #
+#X_Kernel                        Lagrange         # (def.= pp: Lagrange;  DIS: Catmull)
+#X_DistanceMeasure               sqrtlog10        # (def.= pp: sqrtlog10; DIS: log10)
+X_NNodes                        30               # (def.= pp: 20;        DIS: 18)
+#X_NNodeCounting                 NodesPerBin      # (def.=NodesPerBin)
+
+#Mu1_Kernel                      Lagrange         # (def.=Lagrange)
+#Mu1_DistanceMeasure             "loglog025"      # (def.=loglog025)
+Mu1_NNodes                      4                # (def.=6)
+
+# Scale2 not used for fixed-scale tables
+#Mu2_Kernel                      OneNode         # (def.=Lagrange)
+#Mu2_DistanceMeasure             "loglog025"      # (def.=loglog025)
+Mu2_NNodes                      4                # (def.=6)

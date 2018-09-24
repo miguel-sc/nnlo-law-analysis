@@ -1,0 +1,350 @@
+NNLOJET_RUNCARD
+@CHANNEL@-CMS13                   ! Job name id
+ZJ                    ! Process name
+@EVENTS@                ! Number of events
+@ITERATIONS@                     ! Number of iterations
+@SEED@                     ! Seed number
+.@WARMUP@.                ! Warmup
+.@PRODUCTION@.                 ! Production
+CT14nnlo                 ! PDF set
+0                     ! PDF member
+antikt                ! Jet algorithm, accepts 'kt', 'cam' or 'antikt'
+0.4d0                 ! Rcut
+.false.	              ! exclusive
+1	                  ! Heavy particle decay type
+1d-7                  ! Technical cutoff y0
+.true.                ! angular averaging of the phase space, default to true
+2                     ! Virtual Integration method, use 2 if you are not sure
+@REGION@                   ! RR a/b region flag. Accepts 'a','b' or 'all'.
+0                     ! set to zero for MC, 2 for point test
+.false.               ! print max weight flag
+.false.               ! momentum mapping and PDF storage flag
+.false.		          ! colour sampling flag
+.false.                ! explicit pole check flag, stops integration when set to true
+
+PHYSICAL_PARAMETERS
+13000d0	              ! roots
+125.09d0              ! Mass of the Higgs Boson
+0.004029643852d0      ! Width of the Higgs Boson
+91.1876d0             ! Mass of the Z Boson
+2.4952d0              ! Width of the Z Boson
+80.385d0              ! Mass of the W Boson
+2.085d0               ! Width of the W Boson
+173.21d0              ! Mass of the Top Quark
+1.41d0                ! Width of the Top Quark
+4.18d0                ! Mass of the Bottom Quark
+0d0                   ! Width of the Bottom Quark
+1.275d0               ! Mass of the Charm Quark
+0d0                   ! Width of the Charm Quark
+1.777d0               ! Mass of the Tau lepton
+0d0                   ! Width of the Tau lepton
+
+@UNIT_PHASE@
+
+SELECTORS
+
+	!####### SYNTAX ######################
+	!##
+	!##   [select|accept|reject] {observable-name} [min={val_min}] [max={val_max}]
+	!##
+	!#####################################
+	!#
+	!#  * comments begin with the character `!` and will be excluded from the parser
+	!#    just like this documentation block. This way, one can maintain various setups
+	!#    in one runcard and comment in/out parts as needed.
+	!#
+	!#  * multiple selectors are combined with a logical .AND. by default
+	!#
+	!#  * combining a set of selectors using a logical .OR. can be done using the syntax
+	!#
+	!#    OR
+	!#      [select|accept|reject] ...  ! 1st selector
+	!#      [select|accept|reject] ...  ! 2nd selector
+	!#      ...                         ! more?
+	!#    END_OR
+	!#
+	!#  * only necessary to specify at least one of the two: min, max
+	!#
+	!#  * if both are set, the order of the min/max specification is irrelevant
+	!#
+	!#  * each line here generates a new Selector and it is therefore better to reduce
+	!#    the number of lines if possible. For instance the following cases are
+	!#    all equivalent and the one-liners should be preferred:
+	!#
+	!#    a) select ylp min = -5           ! --> accept [-5, +infty]
+	!#       select ylp max = +5           ! --> accept [-infty, +5]
+	!#                                     ! combined:  [-5, +5]
+	!#
+	!#    b) reject ylp max = -5           ! --> reject [+5, +infty]
+	!#       reject ylp min = +5           ! --> reject [-infty, -5]
+	!#                                     ! combined:  [-5, +5]
+	!#
+	!#    c) select ylp min = -5 max = +5  ! --> accept [-5, +5]
+	!#
+	!#    d) select abs_ylp max = +5       ! --> accept |y| < 5 => [-5, +5]
+	!#
+	!#    e) reject abs_ylp min = +5       ! --> reject |y| > 5 => [-5, +5]
+	!#
+	!#  * the `reject` option actually has a very nice use-case in the exclusion
+	!#    of the barrel--endcap region like this
+	!#
+	!#    a) select abs_ylp max = +5                    ! global selector
+	!#       reject abs_ylp min = +1.4442 max = +1.560  ! CMS barrel-endcap region
+	!#
+	!#    b) OR
+	!#         select ylp min = -5      max = -1.560
+	!#         select ylp min = -1.4442 max = +1.4442
+	!#         select ylp min = +1.560  max = +5
+	!#       END_OR
+	!#
+	!#    where the second one using OR-groups is clearly more tedious to specify
+	!#
+	!#####################################
+
+	!----- jet veto
+	select jets_abs_eta max = 2.4
+
+	!----- for Z production we have two leptons (l^[+-] = l[pm])
+	select abs_ylp max = 2.4
+	select abs_ylm max = 2.4
+	select ptlp min = 25 max = 13000
+	select ptlm min = 25 max = 13000
+
+	!----- V = {lp, lm}
+	select mll min = 71.1876 max = 111.1876
+	select ptz min = 30 max = 13000
+
+	!----- for inclusive ptz 
+	select njets min = 1
+
+END_SELECTORS
+
+
+
+HISTOGRAMS
+
+	!####### SYNTAX ######################
+	!##
+	!## a) equal-sized bins:
+	!##   {observable-name}[>{file-name}] nbins={val_nbins} min={val_min} max={val_max}
+	!##
+	!## b) non-uniform bins:
+	!##   {observable-name}[>{file-name}] [bound0,bound1,bound2,...,boundN]
+	!##
+	!## *) wildcard: {observable-name}="cross" to get cross-section-type data files
+	!##
+	!## *) conditional binning:
+	!##    dress a histogram with additional selectors by specifying them inside a block:
+	!##
+	!##        HISTOGRAM_SELECTORS
+	!##        	{SELECTOR}
+	!##        	    .
+	!##        	    .
+	!##        	    .
+	!##        END_HISTOGRAM_SELECTORS
+	!##
+	!##    where {SELECTOR} follows the same syntax described above. A binning into
+	!##    this histogram is then only performed when the event passes all selectors
+	!##    specified in this block. Note: OR groups not supported here!
+	!##
+	!## *) composite histograms:
+	!##    accumulate different sub-histograms into the same composite histogram:
+	!##
+	!##        COMPOSITE > {file-name} ...
+	!##        	{observable-name}
+	!##        	    .
+	!##        	    .
+	!##        	    .
+	!##        END_COMPOSITE
+	!##
+	!##    can be combined with histogram selectors
+	!##
+	!## *) reweighting function:
+	!##    multiply a histogram by a reweighting function by adding an optional specifier:
+	!##
+	!##        fac = {reweight_function}
+	!##
+	!##    where {reweight_function} follows the same syntax as the "REWEIGHT" option
+	!##    described below. Also works for sub-histograms.
+	!##
+	!## *) output type:
+	!##    set the output level of the histogram using the optional specifier:
+	!##
+	!##        output_type = [0-2]
+	!##
+	!##    0: no channel breakdown: only scales
+	!##    1: channel breakdown + scales
+	!##    2: legacy mode: channel breakdown + scales (nMax_scl)
+	!##
+	!#####################################
+	!#
+	!#  * comments begin with the character `!` and will be excluded from the parser
+	!#
+	!#####################################
+
+        ptz > ZJtriple_yb0_ystar0_ptz [30, 35, 40, 45, 50, 55, 60, 70, 80, 90, 100, 120, 140, 160, 180, 240, 300, 400, 1000] grid = ZJtriple_yb0_ystar0_ptz.fast
+        HISTOGRAM_SELECTORS
+                select yboost_Zj max = 0.5
+                select ystar_Zj max = 0.5
+        END_HISTOGRAM_SELECTORS
+
+        ptz > ZJtriple_yb0_ystar1_ptz [30, 35, 40, 45, 50, 55, 60, 70, 80, 90, 100, 120, 140, 160, 180, 240, 300, 400, 1000] grid = ZJtriple_yb0_ystar1_ptz.fast
+        HISTOGRAM_SELECTORS
+                select yboost_Zj max = 0.5
+                select ystar_Zj min = 0.5 max = 1.0
+        END_HISTOGRAM_SELECTORS
+
+END_HISTOGRAMS
+
+
+
+SCALES
+
+	!####### SYNTAX ######################
+	!##
+	!##   muf={scale-specifier} mur={scale-specifier}
+	!##
+	!#####################################
+	!#
+	!#  * {scale-specifier}
+	!#
+	!#    a) fixed scale:    [{fac}*] {value}
+	!#
+	!#    b) dynamic scale:  [{fac}*] {observable-name}
+	!#
+	!#  * the first registered scale is considered to be the central scale
+	!#
+	!#  * the observable for dynamic scales must be [GeV] (this is not checked)
+	!#
+	!#####################################
+
+	muf = z_ht mur = etz
+	muf = 2.718281828 mur = 2.718281828 
+	muf = 4.48168907 mur = 4.48168907 
+	muf = 4.48168907 mur = 2.718281828 
+	muf = 2.718281828 mur = 4.48168907 
+	muf = 12.18249396 mur = 2.718281828 
+	muf = 2.718281828 mur = 12.18249396
+
+END_SCALES
+
+
+
+!####### SYNTAX ######################
+!##
+!## REWEIGHT [{val_factor} * ] [{observable-name} | {val}] [ ** {val_power}]
+!##
+!#####################################
+
+REWEIGHT ht_part**2
+
+!####### SYNTAX ######################
+!##
+!## MINLO [option = value] [option = value] ...
+!##
+!#####################################
+!#
+!#  * available options:
+!#    - order = 0|1|2: The order we’re interested in
+!#    - accuracy = 0-6: Accuracy in the Sudakov
+!#    - nloop = 1-?: Loop order in the αs running
+!#    - conversion = .true.|.false.: switch on/off conversion from b-space
+!#    - threshold = .true.|.false.: switch on/off threshold corrections
+!#    - grid = .true.|.false.: switch on/off the grid feature
+!#
+!#####################################
+
+! MINLO order=1 accuracy=4 grid=.false. 
+
+
+
+!####### SYNTAX ######################
+!##
+!## UNIT_PHASE {options}
+!##
+!## * nocuts : no kinematic cuts are applied
+!##
+!## * fixS   : fixed partonic center of mass energy (shat = roots) 
+!##
+!#####################################
+
+
+
+!####### SYNTAX ######################
+!##
+!## PHOTON_ISOLATION {algorithm} {algorithm-options}
+!##
+!#####################################
+!#
+!#  * Frixione:
+!#
+!#        PHOTON_ISOLATION  frix  delta={var}  epsilon={var}  n={var}
+!#
+!#  * cut on sum(ET) inside a cone around the photon:
+!#
+!#        PHOTON_ISOLATION  etsum  delta={var}  etmax={var}
+!#
+!#####################################
+
+!PHOTON_ISOLATION  frix   delta = 0.5  epsilon = 0.1  n = 1
+!PHOTON_ISOLATION  etsum  delta = 0.5  etmax = 10 etratio = 0 ethreshold = 1
+
+
+!####### SYNTAX ######################
+!##
+!## fac = {reweight_function} [option = value] [option = value] ...
+!##
+!#####################################
+!#
+!#  * reweighting function:
+!#    {reweight_function} follows the same syntax as the "REWEIGHT" option
+!#    described above.
+!#
+!#  * available options:
+!#    - Rcone: set the cone size of the jet-clustering algorithm
+!#    - mur0: override the central renormalization scale
+!#    - muf0: override the central factorization scale
+!#    - P2B: Projection-To-Born, set npar for Born kinematics
+!#
+!#####################################
+
+!MULTI_RUN
+!
+!	fac = +1d0
+!	fac = -1d0  Rcone = 0.4
+!
+!END_MULTI_RUN
+
+
+CHANNELS
+
+	!####### SYNTAX ######################
+	!##
+	!## list of process id's (see selectchannelXYZ.f)
+	!##
+	!#####################################
+	!#
+	!#  * any number of whitespace-separated process id's in one line allowed
+	!#
+	!#  * self-explaning wild-cards:
+	!#    - ALL
+	!#    - LO, NLO, NNLO
+	!#    - V, R
+	!#    - VV, RV, RR
+	!#
+	!#####################################
+
+	@CHANNEL@
+	!	1    ! one B channel
+	! 13   ! one R channel
+	! 73   ! one V channel
+	! 163  ! one RR channel
+	! 317  ! one RV channel
+	! 617  ! one VV channel
+
+	! 17 18 31 32  ! qg-initiated R contributions
+
+END_CHANNELS
+
+SETUP
+END_SETUP

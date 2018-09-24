@@ -103,10 +103,6 @@ ENV/
 # scripts folder
 scripts/
 
-# runcard and steering file
-*.run
-*.str
-
 # law database
 .law/
 

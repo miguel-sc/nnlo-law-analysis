@@ -49,18 +49,5 @@ class MergeFastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
     parts.append('merge2.log')
     logfile = '.'.join(parts)
 
-    dirpath = 'tmpdir' + str(self.branch)
-    os.mkdir(dirpath)
-    prevdir = os.getcwd()
-    os.chdir(dirpath)
+    os.system('fnlo-tk-merge2 -w NNLOJET {merge_dir}/{name}/Combined/Final/NNLO.{obs}.APPLfast.txt {merge_dir}/{name}/{channel}/*.{obs}.s*.tab.gz {out} | tee {log}'.format(obs = self.branch_data['obs'], channel = self.branch_data['channel'], merge_dir = self.merge_dir, name = self.name, log = logfile, out = outfile))
 
-    os.system('fnlo-tk-merge2 -w NNLOJET {merge_dir}/{name}/Combined/Final/NNLO.{obs}.APPLfast.txt {merge_dir}/{name}/{channel}/*.{obs}.s*.tab.gz tmp.tab.gz | tee {log}'.format(obs = self.branch_data['obs'], channel = self.branch_data['channel'], merge_dir = self.merge_dir, name = self.name, log = logfile))
-
-    with open('tmp.tab.gz', 'r') as infile:
-      with self.output().open('w') as outfile:
-        outfile.write(infile.read())
-
-    os.system('rm tmp.tab.gz')
-
-    os.chdir(prevdir)
-    shutil.rmtree(dirpath)

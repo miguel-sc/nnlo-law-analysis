@@ -4,6 +4,7 @@ import luigi
 import six
 import os
 import shutil
+from fnmatch import fnmatch
 
 from FastWarm import FastWarm
 
@@ -22,9 +23,9 @@ class MergeFastWarm(Task):
     return self.remote_target('{}.{}.fastwarm.tar.gz'.format(self.process, self.name))
 
   def run(self):
-    os.mkdir(self.merge_dir + '/tmpdir')
+    os.mkdir('tmpdir')
     prevdir = os.getcwd()
-    os.chdir(self.merge_dir + '/tmpdir')
+    os.chdir('tmpdir')
 
     self.output().parent.touch()
 
@@ -40,12 +41,9 @@ class MergeFastWarm(Task):
     for obs in self.observables:
       os.system('fnlo-add-warmup_v23.pl -d -v 2.4 -w . -o {proc}.{obs}.wrm {obs} | tee {proc}.{obs}.addwarmup.log'.format(proc = self.process, obs = obs))
 
-    os.system('tar -czf tmp.tar.gz ' + self.process + '.*.wrm *.log')
-
-    with open('tmp.tar.gz') as infile:
-      with self.output().open('w') as outfile:
-        outfile.write(infile.read())
+    tarfilter = lambda n : n if (fnmatch(n.name, '{}.*.wrm'.format(self.process)) or fnmatch(n.name, '*.log')) else None
+    self.output().dump(os.getcwd(), filter=tarfilter)
 
     os.chdir(prevdir)
-    shutil.rmtree(self.merge_dir + '/tmpdir')
+    shutil.rmtree('tmpdir')
 

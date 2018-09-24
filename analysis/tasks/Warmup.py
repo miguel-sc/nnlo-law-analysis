@@ -50,7 +50,7 @@ class Warmup(Task, HTCondorWorkflow, law.LocalWorkflow):
     return self.remote_target('{}.{}.{}.warmup.tar.gz'.format(self.process, self.branch_data['channel'], self.name))
 
   def run(self):
-    dirpath = 'tmpdir'
+    dirpath = 'tmpdir' + self.branch_data['seed']
     os.mkdir(dirpath)
     prevdir = os.getcwd()
     os.chdir(dirpath)

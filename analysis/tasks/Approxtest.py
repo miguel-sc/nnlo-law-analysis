@@ -2,8 +2,11 @@
 
 import law
 import luigi
-import os
 import glob
+import os
+
+from law import util
+from subprocess import PIPE
 
 from Combine import Combine
 from FnloCppread import FnloCppread
@@ -39,11 +42,18 @@ class Approxtest(Task, law.LocalWorkflow):
     return law.LocalDirectoryTarget('{}/{}/Approxtest/{}/{}'.format(self.plots_dir, self.name, self.branch_data['channel'], self.branch_data['observable']))
 
   def run(self):
-    self.output().touch()
+    try:
+      with self.output().temporary_path() as self.temp_output_path:
+        os.mkdir(self.temp_output_path)
 
-    weightfile = '{}/{}/Combined/Final/{}.{}.APPLfast.txt'.format(self.merge_dir, self.name, self.branch_data['channel'], self.branch_data['observable'])
-    datfile = glob.glob('{}/{}/{}/*{}*.dat'.format(self.merge_dir, self.name, self.branch_data['channel'], self.branch_data['observable']))[0]
-    outfile = '{}/{}.{}.{}'.format(self.output().path, self.process, self.branch_data['channel'], self.branch_data['observable'])
+        weightfile = '{}/{}/Combined/Final/{}.{}.APPLfast.txt'.format(self.merge_dir, self.name, self.branch_data['channel'], self.branch_data['observable'])
+        datfile = glob.glob('{}/{}/{}/*{}*.dat'.format(self.merge_dir, self.name, self.branch_data['channel'], self.branch_data['observable']))[0]
+        outfile = '{}/{}.{}.{}'.format(self.temp_output_path, self.process, self.branch_data['channel'], self.branch_data['observable'])
 
-    os.system('fastnnlo_approxtest_v2.py -v -d {} -w {} -o {}'.format(datfile, weightfile, outfile))
-
+        code, out, error = util.interruptable_popen(['fastnnlo_approxtest_v2.py', '-v', '-d', datfile, '-w', weightfile, '-o', outfile],stdout=PIPE, stderr=PIPE)
+        
+        if (code != 0):
+          raise Exception('{} exitcode: {}'.format(error, code))
+    except:
+      os.rmdir(self.temp_output_path)
+      raise

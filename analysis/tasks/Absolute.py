@@ -4,6 +4,9 @@ import law
 import luigi
 import os
 
+from law.util import interruptable_popen
+from subprocess import PIPE
+
 from FnloCppreadFinal import FnloCppreadFinal
 
 from analysis.framework import Task
@@ -43,11 +46,19 @@ class Absolute(Task, law.LocalWorkflow):
     return law.LocalDirectoryTarget('{}/{}/Absolute/{}/{}'.format(self.plots_dir, self.name, self.branch_data['channel'], self.branch_data['observable']))
 
   def run(self):
-    self.output().touch()
-
-    datfile = '{}/{}/Combined/Final/{}.{}.{}.dat'.format(self.merge_dir, self.name, self.process, self.branch_data['channel'], self.branch_data['observable'])
-    logfile = '{}/{}/Combined/Final/{}.{}.{}.log'.format(self.merge_dir, self.name, self.process, self.branch_data['channel'], self.branch_data['observable'])
-    outfile = '{}/{}.{}.{}'.format(self.output().path, self.process, self.branch_data['channel'], self.branch_data['observable'])
-
-    os.system('fastnnlo_absolute_v2.py -d {} -l {} -o {}'.format(datfile, logfile, outfile))
+    try:
+      with self.output().temporary_path() as self.temp_output_path:
+        os.mkdir(self.temp_output_path)
+     
+        datfile = '{}/{}/Combined/Final/{}.{}.{}.dat'.format(self.merge_dir, self.name, self.process, self.branch_data['channel'], self.branch_data['observable'])
+        logfile = '{}/{}/Combined/Final/{}.{}.{}.log'.format(self.merge_dir, self.name, self.process, self.branch_data['channel'], self.branch_data['observable']) 
+        outfile = '{}/{}.{}.{}'.format(self.temp_output_path, self.process, self.branch_data['channel'], self.branch_data['observable'])
+     
+        code, out, error = interruptable_popen(['fastnnlo_absolute_v2.py', '-d', datfile, '-l', logfile, '-o', outfile],stdout=PIPE, stderr=PIPE)
+      
+        if (code != 0):
+          raise Exception('{} exitcode: {}'.format(error, code))
+    except:
+      os.rmdir(self.temp_output_path)
+      raise
 

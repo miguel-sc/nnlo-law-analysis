@@ -102,7 +102,7 @@ class HTCondorWorkflow(law.contrib.htcondor.HTCondorWorkflow):
         prevdir = os.getcwd()
         os.system('cd $ANALYSIS_PATH')
         if not os.path.isfile('analysis.tar.gz'):
-            os.system('tar -czvf analysis.tar.gz analysis luigi.cfg law.cfg luigi law six')
+            os.system('tar --exclude=luigi/.git -czvf analysis.tar.gz analysis luigi.cfg law.cfg luigi law six')
 	os.chdir(prevdir)
 
         config.input_files.append(law.util.rel_path(__file__, '../analysis.tar.gz'))

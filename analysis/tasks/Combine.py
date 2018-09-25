@@ -26,13 +26,13 @@ class Combine(Task):
 
   def run(self):
     prevdir = os.getcwd()
-
+    combine_ini = os.path.abspath(self.combine_ini)
     self.output().parent.touch()
-    
+  
     try:
       os.chdir('{}/{}'.format(self.merge_dir, self.name))
 
-      code, job_out, error = interruptable_popen(['nnlojet-combine.py', '-C', self.combine_ini, '-j', self.cores],stdout=PIPE, stderr=PIPE)
+      code, job_out, error = interruptable_popen(['nnlojet-combine.py', '-C', combine_ini, '-j', self.cores],stdout=PIPE, stderr=PIPE)
       if (code != 0):
         raise Exception(error + 'nnlojet-combine returned non-zero exit status {}'.format(code))
 
@@ -46,7 +46,7 @@ class Combine(Task):
             parts.insert(0, self.process)
             endfile = '.'.join(parts)
           
-            code, out, error = interruptable_popen('nnlojet-combine.py -C {} --APPLfast Combined/Final/{} > Combined/Final/{}'.format(self.combine_ini, filename, endfile), shell=True ,stdout=PIPE, stderr=PIPE)
+            code, out, error = interruptable_popen('nnlojet-combine.py -C {} --APPLfast Combined/Final/{} > Combined/Final/{}'.format(combine_ini, filename, endfile), shell=True ,stdout=PIPE, stderr=PIPE)
             if (code != 0):
               raise Exception(error + 'NNLOJET returned non-zero exit status {}'.format(code))
 

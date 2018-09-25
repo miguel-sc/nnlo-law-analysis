@@ -3,6 +3,8 @@
 import law
 import luigi
 import os
+from law.util import interruptable_popen
+from subprocess import PIPE
 
 from FastProd import FastProd
 
@@ -37,5 +39,6 @@ class CopyTables(Task, law.LocalWorkflow):
     self.output().parent.touch()
     prevdir = os.getcwd()
     os.chdir(self.output().parent.path)
+    #code, out, error = interruptable_popen('python "{}.input().load('')"'.format(self),shell=True, stdout=PIPE, stderr=PIPE)
     self.input().load('')
     os.chdir(prevdir)

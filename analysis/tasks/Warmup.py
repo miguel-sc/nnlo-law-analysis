@@ -5,6 +5,8 @@ import luigi
 import os
 import shutil
 import re
+import tempfile
+
 from fnmatch import fnmatch
 from subprocess import PIPE
 from law.util import interruptable_popen
@@ -53,33 +55,36 @@ class Warmup(Task, HTCondorWorkflow, law.LocalWorkflow):
 
   def run(self):
     dirpath = 'tmpdir' + self.branch_data['seed']
-    os.mkdir(dirpath)
     prevdir = os.getcwd()
-    os.chdir(dirpath)
 
-    self.output().parent.touch()
+    try:
+      os.mkdir(dirpath)
+      os.chdir(dirpath)
 
-    with open('tmp.run', 'w') as outfile:
-      outfile.write(self.input().load(formatter='text'))
+      self.output().parent.touch()
 
-    os.environ['OMP_NUM_THREADS'] = self.htcondor_request_cpus
+      with open('tmp.run', 'w') as outfile:
+        outfile.write(self.input().load(formatter='text'))
 
-    outfile = os.path.basename(self.output().path)
-    parts = outfile.split('.')
-    parts.pop()
-    parts.pop()
-    parts.append('log')
-    logfile = '.'.join(parts)
+      os.environ['OMP_NUM_THREADS'] = self.htcondor_request_cpus
 
-    code, out, error = interruptable_popen(['NNLOJET', '-run', 'tmp.run'],stdout=PIPE, stderr=PIPE)
-    with open(logfile, 'w') as outfile:
-      outfile.write(out)
-    if (code != 0):
-      raise Exception(error + 'NNLOJET returned non-zero exit status {}'.format(code))
+      outfile = os.path.basename(self.output().path)
+      parts = outfile.split('.')
+      parts.pop()
+      parts.pop()
+      parts.append('log')
+      logfile = '.'.join(parts)
 
-    tarfilter = lambda n : n if fnmatch(n.name, '*{}*'.format(self.branch_data['channel'])) else None
-    self.output().dump(os.getcwd(), filter=tarfilter)
+      code, out, error = interruptable_popen(['NNLOJET', '-run', 'tmp.run'],stdout=PIPE, stderr=PIPE)
+      with open(logfile, 'w') as outfile:
+        outfile.write(out)
+      if (code != 0):
+        raise Exception(error + 'NNLOJET returned non-zero exit status {}'.format(code))
 
-    os.chdir(prevdir)
-    shutil.rmtree(dirpath)
+      tarfilter = lambda n : n if fnmatch(n.name, '*{}*'.format(self.branch_data['channel'])) else None
+      self.output().dump(os.getcwd(), filter=tarfilter)
+
+    finally:
+      os.chdir(prevdir)
+      shutil.rmtree(dirpath)
 

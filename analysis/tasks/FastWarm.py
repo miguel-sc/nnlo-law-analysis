@@ -65,37 +65,40 @@ class FastWarm(Task, HTCondorWorkflow, law.LocalWorkflow):
 
   def run(self):
     dirpath = 'tmpdir' + self.branch_data['seed']
-    os.mkdir(dirpath)
     prevdir = os.getcwd()
-    os.chdir(dirpath)
 
-    self.output().parent.touch()
+    try:
+      os.mkdir(dirpath)
+      os.chdir(dirpath)
 
-    self.input()['warmup'].load('')
-    self.input()['steeringfiles'].load('')
+      self.output().parent.touch()
 
-    with open('tmp.run', 'w') as outfile:
-      outfile.write(self.input()['runcard'].load(formatter='text'))
+      self.input()['warmup'].load('')
+      self.input()['steeringfiles'].load('')
 
-    outfile = os.path.basename(self.output().path)
-    parts = outfile.split('.')
-    parts.pop()
-    parts.pop()
-    parts.append('log')
-    logfile = '.'.join(parts)
+      with open('tmp.run', 'w') as outfile:
+        outfile.write(self.input()['runcard'].load(formatter='text'))
 
-    code, out, error = interruptable_popen(['NNLOJET', '-run', 'tmp.run'],stdout=PIPE, stderr=PIPE)
-    with open(logfile, 'w') as outfile:
-      outfile.write(out)
-    if (code != 0):
-      raise Exception(error + 'NNLOJET returned non-zero exit status {}'.format(code))
+      outfile = os.path.basename(self.output().path)
+      parts = outfile.split('.')
+      parts.pop()
+      parts.pop()
+      parts.append('log')
+      logfile = '.'.join(parts)
 
-    for file in glob.glob('*.wrm'):
-      os.rename(file, self.branch_data['seed'] + '.' + file)
+      code, out, error = interruptable_popen(['NNLOJET', '-run', 'tmp.run'],stdout=PIPE, stderr=PIPE)
+      with open(logfile, 'w') as outfile:
+        outfile.write(out)
+      if (code != 0):
+        raise Exception(error + 'NNLOJET returned non-zero exit status {}'.format(code))
 
-    tarfilter = lambda n : n if (fnmatch(n.name, '*.wrm') or fnmatch(n.name, logfile)) else None
-    self.output().dump(os.getcwd(), filter=tarfilter)
+      for file in glob.glob('*.wrm'):
+        os.rename(file, self.branch_data['seed'] + '.' + file)
 
-    os.chdir(prevdir)
-    shutil.rmtree(dirpath)
+      tarfilter = lambda n : n if (fnmatch(n.name, '*.wrm') or fnmatch(n.name, logfile)) else None
+      self.output().dump(os.getcwd(), filter=tarfilter)
+
+    finally:
+      os.chdir(prevdir)
+      shutil.rmtree(dirpath)
 

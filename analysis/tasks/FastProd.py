@@ -69,35 +69,38 @@ class FastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
 
   def run(self):
     dirpath = 'tmpdir' + self.branch_data['seed']
-    os.mkdir(dirpath)
     prevdir = os.getcwd()
-    os.chdir(dirpath)
+    
+    try:
+      os.mkdir(dirpath)
+      os.chdir(dirpath)
 
-    self.output().parent.touch()
+      self.output().parent.touch()
 
-    self.input()['warmup'].load('')
-    self.input()['fastwarm'].load('')
-    self.input()['steeringfiles'].load('')
+      self.input()['warmup'].load('')
+      self.input()['fastwarm'].load('')
+      self.input()['steeringfiles'].load('')
 
-    with open('tmp.run', 'w') as outfile:
-      outfile.write(self.input()['runcard'].load(formatter='text'))
+      with open('tmp.run', 'w') as outfile:
+        outfile.write(self.input()['runcard'].load(formatter='text'))
 
-    outfile = os.path.basename(self.output().path)
-    parts = outfile.split('.')
-    parts.pop()
-    parts.pop()
-    parts.append('log')
-    logfile = '.'.join(parts)
+      outfile = os.path.basename(self.output().path)
+      parts = outfile.split('.')
+      parts.pop()
+      parts.pop()
+      parts.append('log')
+      logfile = '.'.join(parts)
 
-    code, out, error = interruptable_popen(['NNLOJET', '-run', 'tmp.run'],stdout=PIPE, stderr=PIPE)
-    with open(logfile, 'w') as outfile:
-      outfile.write(out)
-    if (code != 0):
-      raise Exception(error + 'NNLOJET returned non-zero exit status {}'.format(code))
+      code, out, error = interruptable_popen(['NNLOJET', '-run', 'tmp.run'],stdout=PIPE, stderr=PIPE)
+      with open(logfile, 'w') as outfile:
+        outfile.write(out)
+      if (code != 0):
+        raise Exception(error + 'NNLOJET returned non-zero exit status {}'.format(code))
 
-    tarfilter = lambda n : n if (fnmatch(n.name, '*.tab.gz') or fnmatch(n.name, '*.dat') or fnmatch(n.name, logfile)) else None
-    self.output().dump(os.getcwd(), filter=tarfilter)
+      tarfilter = lambda n : n if (fnmatch(n.name, '*.tab.gz') or fnmatch(n.name, '*.dat') or fnmatch(n.name, logfile)) else None
+      self.output().dump(os.getcwd(), filter=tarfilter)
 
-    os.chdir(prevdir)
-    shutil.rmtree(dirpath)
+    finally:
+      os.chdir(prevdir)
+      shutil.rmtree(dirpath)
 

@@ -24,14 +24,10 @@ action() {
     source /cvmfs/grid.cern.ch/emi3ui-latest/etc/profile.d/setup-ui-example.sh
 
     # NNLOJET + APPLfast
-    #source /cvmfs/etp.kit.edu/nnlo-multicore/fnlosrc_source.sh
-    source /storage/9/mcorrea/local/src/fnlosrc_source.sh
+    source /cvmfs/etp.kit.edu/nnlo-multicore/fnlosrc_source.sh
 
     # NNLOJET combine script
-    #export PATH="/cvmfs/etp.kit.edu/fnlo/src/NNLOJET_rev4708/driver/bin:$PATH"
-
-    #export NNLOJET_BIN_PATH=/cvmfs/etp.kit.edu/nnlo-multicore/src/NNLOJET_rev5088/driver
-    #export PATH=/cvmfs/etp.kit.edu/nnlo-multicore/src/NNLOJET_rev5088/driver:${PATH}
+    export PATH="/cvmfs/etp.kit.edu/nnlo-multicore/src/NNLOJET_rev5088/driver/bin:$PATH"
 
 }
 action

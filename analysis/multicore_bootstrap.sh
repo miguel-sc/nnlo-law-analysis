@@ -5,8 +5,11 @@ action() {
     export PATH="/cvmfs/cms.cern.ch/slc6_amd64_gcc481/external/python/2.7.6/bin:$PATH"
     export LD_LIBRARY_PATH="/cvmfs/cms.cern.ch/slc6_amd64_gcc481/external/python/2.7.6/lib:/cvmfs/cms.cern.ch/slc6_amd64_gcc481/external/openssl/0.9.8e__1.0.1/lib:$LD_LIBRARY_PATH"
 
+    tar -xzf analysis*.tar.gz
+    rm analysis*.tar.gz
+
     # law + luigi env variables
-    local base="{{analysis_path}}"
+    local base="$PWD"
     export LAW_HOME="$base/.law"
     export LAW_CONFIG_FILE="$base/law.cfg"
     export LUIGI_CONFIG_PATH="$base/luigi.cfg"

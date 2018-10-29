@@ -9,8 +9,9 @@ from fnmatch import fnmatch
 from subprocess import PIPE
 from law.util import interruptable_popen
 
+from util import createRuncard
+
 from BaseRuncard import BaseRuncard
-from Runcard import Runcard
 from Warmup import Warmup
 from Steeringfiles import Steeringfiles
 
@@ -49,15 +50,7 @@ class FastWarm(Task, HTCondorWorkflow, law.LocalWorkflow):
     return {
       'warmup': Warmup(branch = self.branch_data['index']),
       'steeringfiles': Steeringfiles(),
-      'runcard': Runcard(
-        channel = self.branch_data['channel'],
-        events = self.branch_data['events'],
-        seed = self.branch_data['seed'],
-        iterations = '1',
-        warmup = 'false',
-        production = 'true',
-        unit_phase = 'UNIT_PHASE'
-      )
+      'baseruncard': BaseRuncard()
     }
 
   def output(self):
@@ -77,7 +70,17 @@ class FastWarm(Task, HTCondorWorkflow, law.LocalWorkflow):
       self.input()['steeringfiles'].load('')
 
       with open('tmp.run', 'w') as outfile:
-        outfile.write(self.input()['runcard'].load(formatter='text'))
+        baseRuncard = self.input()['baseruncard'].load(formatter='text')
+        runcard = createRuncard(baseRuncard, {
+          'channel': self.branch_data['channel'],
+          'events': self.branch_data['events'],
+          'seed': self.branch_data['seed'],
+          'iterations': '1',
+          'warmup': 'false',
+          'production': 'true',
+          'unit_phase': 'UNIT_PHASE'
+        })
+        outfile.write(runcard)
 
       outfile = os.path.basename(self.output().path)
       parts = outfile.split('.')

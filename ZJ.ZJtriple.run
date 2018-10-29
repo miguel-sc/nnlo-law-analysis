@@ -1,5 +1,5 @@
 NNLOJET_RUNCARD
-@CHANNEL@-CMS13                   ! Job name id
+@FULLCHANNEL@-CMS13                   ! Job name id
 ZJ                    ! Process name
 @EVENTS@                ! Number of events
 @ITERATIONS@                     ! Number of iterations

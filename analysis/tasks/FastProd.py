@@ -10,8 +10,9 @@ from law.util import interruptable_popen
 
 from law.contrib.htcondor.job import HTCondorJobManager
 
+from util import createRuncard
+
 from BaseRuncard import BaseRuncard
-from Runcard import Runcard
 from Warmup import Warmup
 from MergeFastWarm import MergeFastWarm
 from Steeringfiles import Steeringfiles
@@ -53,15 +54,7 @@ class FastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
       'warmup': Warmup(branch = self.branch_data['index']),
       'fastwarm': MergeFastWarm(),
       'steeringfiles': Steeringfiles(),
-      'runcard': Runcard(
-        channel = self.branch_data['channel'],
-        events = self.branch_data['events'],
-        seed = self.branch_data['seed'],
-        iterations = '1',
-        warmup = 'false',
-        production = 'true',
-        unit_phase = ''
-      )
+      'baseruncard': BaseRuncard()
     }
 
   def output(self):
@@ -82,7 +75,17 @@ class FastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
       self.input()['steeringfiles'].load('')
 
       with open('tmp.run', 'w') as outfile:
-        outfile.write(self.input()['runcard'].load(formatter='text'))
+        baseRuncard = self.input()['baseruncard'].load(formatter='text')
+        runcard = createRuncard(baseRuncard, {
+          'channel': self.branch_data['channel'],
+          'events': self.branch_data['events'],
+          'seed': self.branch_data['seed'],
+          'iterations': '1',
+          'warmup': 'false',
+          'production': 'true',
+          'unit_phase': ''
+        })
+        outfile.write(runcard)
 
       outfile = os.path.basename(self.output().path)
       parts = outfile.split('.')

@@ -7,12 +7,13 @@ import shutil
 import re
 import tempfile
 
+from util import createRuncard
+
 from fnmatch import fnmatch
 from subprocess import PIPE
 from law.util import interruptable_popen
 
 from BaseRuncard import BaseRuncard
-from Runcard import Runcard
 
 from analysis.framework import Task, HTCondorWorkflow
 
@@ -41,14 +42,7 @@ class Warmup(Task, HTCondorWorkflow, law.LocalWorkflow):
     }
 
   def requires(self):
-    return Runcard(
-      channel = self.branch_data['channel'],
-      events = self.branch_data['events'],
-      seed = self.branch_data['seed'],
-      iterations = self.branch_data['iterations'],
-      warmup = 'true',
-      production = 'false',
-      unit_phase = '')
+    return BaseRuncard()
 
   def output(self):
     return self.remote_target('{}.{}.{}.warmup.tar.gz'.format(self.process, self.branch_data['channel'], self.name))
@@ -64,7 +58,17 @@ class Warmup(Task, HTCondorWorkflow, law.LocalWorkflow):
       self.output().parent.touch()
 
       with open('tmp.run', 'w') as outfile:
-        outfile.write(self.input().load(formatter='text'))
+        baseRuncard = self.input().load(formatter='text')
+        runcard = createRuncard(baseRuncard, {
+          'channel': self.branch_data['channel'],
+          'events': self.branch_data['events'],
+          'seed': self.branch_data['seed'],
+          'iterations': self.branch_data['iterations'],
+          'warmup': 'true',
+          'production': 'false',
+          'unit_phase': ''
+        })
+        outfile.write(runcard)
 
       os.environ['OMP_NUM_THREADS'] = self.htcondor_request_cpus
 

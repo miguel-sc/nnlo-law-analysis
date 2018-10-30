@@ -74,7 +74,17 @@ class FastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
       self.input()['fastwarm'].load('')
       self.input()['steeringfiles'].load('')
 
-      with open('tmp.run', 'w') as outfile:
+      outfile = os.path.basename(self.output().path)
+      parts = outfile.split('.')
+      parts.pop()
+      parts.pop()
+      parts.append('log')
+      logfile = '.'.join(parts)
+      parts.pop()
+      parts.append('run')
+      runcardfile = '.'.join(parts)
+
+      with open(runcardfile, 'w') as outfile:
         baseRuncard = self.input()['baseruncard'].load(formatter='text')
         runcard = createRuncard(baseRuncard, {
           'channel': self.branch_data['channel'],
@@ -87,20 +97,13 @@ class FastProd(Task, HTCondorWorkflow, law.LocalWorkflow):
         })
         outfile.write(runcard)
 
-      outfile = os.path.basename(self.output().path)
-      parts = outfile.split('.')
-      parts.pop()
-      parts.pop()
-      parts.append('log')
-      logfile = '.'.join(parts)
-
-      code, out, error = interruptable_popen(['NNLOJET', '-run', 'tmp.run'],stdout=PIPE, stderr=PIPE)
+      code, out, error = interruptable_popen(['NNLOJET', '-run', runcardfile],stdout=PIPE, stderr=PIPE)
       with open(logfile, 'w') as outfile:
         outfile.write(out)
       if (code != 0):
         raise Exception(error + 'NNLOJET returned non-zero exit status {}'.format(code))
 
-      tarfilter = lambda n : n if (fnmatch(n.name, '*.tab.gz') or fnmatch(n.name, '*.dat') or fnmatch(n.name, logfile)) else None
+      tarfilter = lambda n : n if (fnmatch(n.name, '*.tab.gz') or fnmatch(n.name, '*.dat') or fnmatch(n.name, logfile) or fnmatch(n.name, runcardfile)) else None
       self.output().dump(os.getcwd(), filter=tarfilter)
 
     finally:

@@ -57,7 +57,17 @@ class Warmup(Task, HTCondorWorkflow, law.LocalWorkflow):
 
       self.output().parent.touch()
 
-      with open('tmp.run', 'w') as outfile:
+      outfile = os.path.basename(self.output().path)
+      parts = outfile.split('.')
+      parts.pop()
+      parts.pop()
+      parts.append('log')
+      logfile = '.'.join(parts)
+      parts.pop()
+      parts.append('run')
+      runcardfile = '.'.join(parts)
+
+      with open(runcardfile, 'w') as outfile:
         baseRuncard = self.input().load(formatter='text')
         runcard = createRuncard(baseRuncard, {
           'channel': self.branch_data['channel'],
@@ -72,14 +82,7 @@ class Warmup(Task, HTCondorWorkflow, law.LocalWorkflow):
 
       os.environ['OMP_NUM_THREADS'] = self.htcondor_request_cpus
 
-      outfile = os.path.basename(self.output().path)
-      parts = outfile.split('.')
-      parts.pop()
-      parts.pop()
-      parts.append('log')
-      logfile = '.'.join(parts)
-
-      code, out, error = interruptable_popen(['NNLOJET', '-run', 'tmp.run'],stdout=PIPE, stderr=PIPE)
+      code, out, error = interruptable_popen(['NNLOJET', '-run', runcardfile],stdout=PIPE, stderr=PIPE)
       with open(logfile, 'w') as outfile:
         outfile.write(out)
       if (code != 0):

@@ -69,7 +69,17 @@ class FastWarm(Task, HTCondorWorkflow, law.LocalWorkflow):
       self.input()['warmup'].load('')
       self.input()['steeringfiles'].load('')
 
-      with open('tmp.run', 'w') as outfile:
+      outfile = os.path.basename(self.output().path)
+      parts = outfile.split('.')
+      parts.pop()
+      parts.pop()
+      parts.append('log')
+      logfile = '.'.join(parts)
+      parts.pop()
+      parts.append('run')
+      runcardfile = '.'.join(parts)
+
+      with open(runcardfile, 'w') as outfile:
         baseRuncard = self.input()['baseruncard'].load(formatter='text')
         runcard = createRuncard(baseRuncard, {
           'channel': self.branch_data['channel'],
@@ -82,14 +92,7 @@ class FastWarm(Task, HTCondorWorkflow, law.LocalWorkflow):
         })
         outfile.write(runcard)
 
-      outfile = os.path.basename(self.output().path)
-      parts = outfile.split('.')
-      parts.pop()
-      parts.pop()
-      parts.append('log')
-      logfile = '.'.join(parts)
-
-      code, out, error = interruptable_popen(['NNLOJET', '-run', 'tmp.run'],stdout=PIPE, stderr=PIPE)
+      code, out, error = interruptable_popen(['NNLOJET', '-run', runcardfile],stdout=PIPE, stderr=PIPE)
       with open(logfile, 'w') as outfile:
         outfile.write(out)
       if (code != 0):
@@ -98,7 +101,7 @@ class FastWarm(Task, HTCondorWorkflow, law.LocalWorkflow):
       for file in glob.glob('*.wrm'):
         os.rename(file, self.branch_data['seed'] + '.' + file)
 
-      tarfilter = lambda n : n if (fnmatch(n.name, '*.wrm') or fnmatch(n.name, logfile)) else None
+      tarfilter = lambda n : n if (fnmatch(n.name, '*.wrm') or fnmatch(n.name, logfile) or fnmatch(n.name, runcardfile)) else None
       self.output().dump(os.getcwd(), filter=tarfilter)
 
     finally:

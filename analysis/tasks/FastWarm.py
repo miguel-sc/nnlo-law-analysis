@@ -86,8 +86,8 @@ class FastWarm(Task, HTCondorWorkflow, law.LocalWorkflow):
           'events': self.branch_data['events'],
           'seed': self.branch_data['seed'],
           'iterations': '1',
-          'warmup': 'false',
-          'production': 'true',
+          'warmup': '0',
+          'production': '.true.',
           'unit_phase': 'UNIT_PHASE'
         })
         outfile.write(runcard)

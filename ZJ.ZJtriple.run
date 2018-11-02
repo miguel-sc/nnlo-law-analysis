@@ -4,8 +4,8 @@ ZJ                    ! Process name
 @EVENTS@                ! Number of events
 @ITERATIONS@                     ! Number of iterations
 @SEED@                     ! Seed number
-.@WARMUP@.                ! Warmup
-.@PRODUCTION@.                 ! Production
+@WARMUP@                ! Warmup
+@PRODUCTION@                 ! Production
 CT14nnlo                 ! PDF set
 0                     ! PDF member
 antikt                ! Jet algorithm, accepts 'kt', 'cam' or 'antikt'

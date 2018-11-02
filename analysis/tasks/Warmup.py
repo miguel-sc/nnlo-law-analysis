@@ -74,8 +74,8 @@ class Warmup(Task, HTCondorWorkflow, law.LocalWorkflow):
           'events': self.branch_data['events'],
           'seed': self.branch_data['seed'],
           'iterations': self.branch_data['iterations'],
-          'warmup': 'true',
-          'production': 'false',
+          'warmup': '1',
+          'production': '.false.',
           'unit_phase': ''
         })
         outfile.write(runcard)

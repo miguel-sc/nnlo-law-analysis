@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import BaseRuncard
-import Runcard
 import Warmup
 import FastWarm
 import MergeFastWarm

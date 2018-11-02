@@ -26,7 +26,6 @@ action() {
 
     export ANALYSIS_PATH="$PWD"
     export ANALYSIS_DATA_PATH="$ANALYSIS_PATH"
-    law db --verbose
 
 }
 action

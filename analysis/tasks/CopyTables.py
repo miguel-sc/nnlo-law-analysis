@@ -18,16 +18,13 @@ class CopyTables(Task, law.LocalWorkflow):
   def create_branch_map(self):
     return FastProd().branch_map
 
-  def requires(self):
-    return FastProd(branch = self.branch)
-
   def workflow_requires(self):
     return {
       "fastprod": FastProd()
     }
 
   def output(self):
-    basename = os.path.basename(self.input().path)
+    basename = os.path.basename(FastProd(branch = self.branch).output().path)
     parts = basename.split('.')
     parts.pop()
     parts.pop()
@@ -39,6 +36,5 @@ class CopyTables(Task, law.LocalWorkflow):
     self.output().parent.touch()
     prevdir = os.getcwd()
     os.chdir(self.output().parent.path)
-    #code, out, error = interruptable_popen('python "{}.input().load('')"'.format(self),shell=True, stdout=PIPE, stderr=PIPE)
-    self.input().load('')
+    FastProd(branch = self.branch).output().load('')
     os.chdir(prevdir)
